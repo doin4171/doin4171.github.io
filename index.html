@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>AI 기상·출근 매니저</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#0B0C10">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@200;300;400;500;700&display=swap">
@@ -16,7 +17,7 @@
   --nav-sel: rgba(255, 255, 255, .13);
   --nav-line: rgba(255, 255, 255, .06);
   --fg: #F3F3F5;
-  --muted: #8F9098;
+  --muted: #A3A4AC;
   --accent: #FF8A3D;
   --accent-soft: #3A2414;
   --go: #3BCB82;
@@ -38,7 +39,7 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --bg: #F2F2F6; --surface: #FFFFFF; --surface-2: #E8E8EE; --line: #DCDCE3;
-    --fg: #111114; --muted: #6B6C74; --accent: #E2691A; --accent-soft: #FCE7D8;
+    --fg: #111114; --muted: #5C5D65; --accent: #E2691A; --accent-soft: #FCE7D8;
     --go: #1C9C5A; --go-soft: #DBF2E4; --wait: #AE6800; --wait-soft: #FBEBD0;
     --stop: #D0362B; --stop-soft: #F9DFDC; --prep: #4A5BC2; --prep-soft: #E2E5F8;
     --on-accent: #FFFFFF; --nav: rgba(255, 255, 255, .9); --shadow: 0 8px 24px rgba(20, 20, 30, .12);
@@ -49,7 +50,7 @@
 }
 :root[data-theme="light"] {
   --bg: #F2F2F6; --surface: #FFFFFF; --surface-2: #E8E8EE; --line: #DCDCE3;
-  --fg: #111114; --muted: #6B6C74; --accent: #E2691A; --accent-soft: #FCE7D8;
+  --fg: #111114; --muted: #5C5D65; --accent: #E2691A; --accent-soft: #FCE7D8;
   --go: #1C9C5A; --go-soft: #DBF2E4; --wait: #AE6800; --wait-soft: #FBEBD0;
   --stop: #D0362B; --stop-soft: #F9DFDC; --prep: #4A5BC2; --prep-soft: #E2E5F8;
   --on-accent: #FFFFFF; --nav: rgba(255, 255, 255, .9); --shadow: 0 8px 24px rgba(20, 20, 30, .12);
@@ -67,7 +68,7 @@ body {
   color: var(--fg);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 0 calc(env(safe-area-inset-bottom, 0px) + 170px);
@@ -228,9 +229,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .edit-preview .k { font-size: .78rem; color: var(--muted); }
 .btn.del { background: transparent; color: var(--stop); }
 
-.card { background: var(--surface); border-radius: var(--r); padding: 16px; min-width: 0; }
+.card { background: var(--surface); border-radius: var(--r); padding: 18px; min-width: 0; }
 .card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-.card-h h3 { font-size: 1rem; }
+.card-h h3 { font-size: 1.08rem; display: flex; align-items: center; gap: 8px; }
 .src { font-size: .7rem; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
 .src.ai { background: var(--go-soft); color: var(--go); }
 
@@ -335,12 +336,15 @@ tr.best .rank { background: var(--go); color: var(--on-accent); }
 .wake-log { display: grid; gap: 0; font-size: .85rem; }
 .wake-log div { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .wake-log div:last-child { border-bottom: 0; }
-.sleep-sim { display: grid; gap: 10px; }
-.stage { display: flex; height: 26px; border-radius: 8px; overflow: hidden; background: var(--surface-2); }
-.stage i { flex: 1; }
-.stage i.deep { background: var(--prep); }
-.stage i.light { background: color-mix(in srgb, var(--prep) 35%, var(--surface)); }
-.stage i.win { box-shadow: inset 0 -4px 0 var(--accent); }
+/* 실제 알람 카드: 이 화면을 켜 둔 동안 실제 시각에 울림 */
+.live-box { display: grid; gap: 10px; }
+.arm-status { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: .9rem; }
+.arm-status .dot { width: 9px; height: 9px; background: var(--off); }
+.arm-status.on .dot { background: var(--go); animation: armPulse 1.6s ease-in-out infinite; }
+@keyframes armPulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--go) 22%, transparent); } }
+.web-note { font-size: .82rem; color: var(--muted); border-left: 3px solid var(--wait); padding-left: 10px; }
+.handoff { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+a.btn { color: inherit; text-decoration: none; }
 
 /* 울리는 화면 */
 .ring {
@@ -400,7 +404,7 @@ tr.best .rank { background: var(--go); color: var(--on-accent); }
 
 .toast { position: fixed; z-index: 70; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 12px); width: min(520px, calc(100% - 32px)); }
 .muted { color: var(--muted); }
-.small { font-size: .8rem; }
+.small { font-size: .84rem; }
 .stack { display: grid; gap: 10px; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .empty { color: var(--muted); font-size: .88rem; padding: 12px; background: var(--surface-2); border-radius: 12px; }
@@ -516,6 +520,19 @@ body.editing .nav, body.editing .fab { display: none; }
 .wheel-item { height: 44px; display: grid; place-items: center; scroll-snap-align: center; font-size: 1.4rem; font-weight: 500; color: var(--off); font-variant-numeric: tabular-nums; cursor: pointer; transition: color .15s, font-size .15s; }
 .wheel-item.on { color: var(--fg); font-size: 2rem; font-weight: 700; }
 .count-row .unit-lbl { justify-self: start; padding-left: 14px; font-weight: 700; }
+/* 시간 다이얼: 오전/오후 · 시 · 분 세 줄을 위아래로 끌어서 고름 (가운데 줄이 선택값) */
+.tdial { display: grid; grid-template-columns: 1.15fr 1fr auto 1fr; align-items: center; border-radius: 18px; background: var(--surface-2); padding: 0 10px; user-select: none; -webkit-user-select: none; }
+.tcol { height: 132px; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior: contain; cursor: grab; outline: none; border-radius: 12px; -webkit-mask-image: linear-gradient(transparent, #000 28%, #000 72%, transparent); mask-image: linear-gradient(transparent, #000 28%, #000 72%, transparent); }
+.tcol::-webkit-scrollbar { display: none; }
+.tcol.dragging { cursor: grabbing; scroll-snap-type: none; }
+.tcol:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+.tpad { height: 44px; }
+.titem { height: 44px; display: grid; place-items: center; scroll-snap-align: center; font-size: 1.45rem; font-weight: 600; color: var(--off); font-variant-numeric: tabular-nums; transition: color .12s, transform .12s; }
+.titem.on { color: var(--fg); transform: scale(1.35); font-weight: 700; }
+.tcol.ap .titem { font-size: 1.05rem; }
+.tsep { font-size: 1.9rem; font-weight: 700; color: var(--fg); padding: 0 4px 6px; }
+.field-err { color: var(--stop); font-size: .84rem; font-weight: 600; }
+.unit.invalid input { border-color: var(--stop); box-shadow: 0 0 0 3px color-mix(in srgb, var(--stop) 25%, transparent); }
 /* 울리는 화면 미션 */
 .m-head { display: flex; justify-content: space-between; align-items: center; }
 .m-big { text-align: center; font-size: clamp(2rem, 10vw, 2.8rem); font-weight: 700; font-variant-numeric: tabular-nums; padding: 6px 0; overflow-wrap: anywhere; }
@@ -535,6 +552,151 @@ body.editing .nav, body.editing .fab { display: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* v8 가독성: 결론 먼저, 긴 표는 카드로, 계산 근거는 접기 */
+.lead { font-size: .95rem; color: var(--muted); }
+.hint { font-size: .92rem; color: var(--muted); padding: 0 4px; }
+.hint b { color: var(--fg); }
+.alert { font-size: .93rem; padding: 12px 14px; align-items: center; }
+.alert .badge { font-size: .74rem; margin-top: 0; }
+.alert-txt { display: grid; gap: 2px; min-width: 0; }
+.alert-sub { font-size: .84rem; opacity: .78; }
+.stat .k { font-size: .8rem; }
+.hero .sub { font-size: .92rem; }
+.hero .eyebrow { font-size: .88rem; }
+
+.bar.thin { height: 10px; border-radius: 999px; gap: 2px; margin-bottom: 14px; }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; }
+.flow li { display: grid; grid-template-columns: 22px 1fr auto; column-gap: 12px; align-items: center; }
+.flow .pt { min-height: 40px; }
+.flow .pt .dot { width: 14px; height: 14px; border-radius: 50%; justify-self: center; background: var(--c, var(--fg)); box-shadow: 0 0 0 4px var(--surface); }
+.flow .pt .lb { font-weight: 700; font-size: 1rem; }
+.flow .pt .tm { font-family: var(--font-num); font-size: 1.2rem; font-weight: 600; }
+.flow .du { min-height: 34px; }
+.flow .du .rail { width: 6px; height: 100%; min-height: 34px; border-radius: 3px; justify-self: center; }
+.flow .du .lb { font-size: .92rem; color: var(--muted); }
+.flow .du .mn { font-family: var(--font-num); font-size: .92rem; color: var(--muted); }
+.flow .pt.end .lb small { display: block; font-weight: 500; font-size: .82rem; color: var(--muted); }
+
+.wx-override { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: .88rem; color: var(--muted); }
+.wx .desc { font-size: .95rem; }
+.note { font-size: .88rem; color: var(--muted); margin-top: 10px; }
+
+.kv { display: grid; gap: 10px; margin: 0; }
+.kv div { display: grid; gap: 2px; }
+.kv dt { font-weight: 700; display: flex; justify-content: space-between; gap: 10px; }
+.kv dt .num { font-weight: 600; }
+.kv dd { margin: 0; font-size: .88rem; color: var(--muted); }
+.range { margin: 30px 0 34px; }
+.range .pin { font-size: .86rem; }
+.range .pin.below { font-size: .78rem; }
+
+details.fold { padding: 0; }
+details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 16px 18px; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold .fold-t { flex: 1; min-width: 0; display: grid; gap: 2px; }
+details.fold .fold-t h3 { font-size: 1.08rem; }
+details.fold .fold-s { font-size: .88rem; color: var(--muted); }
+details.fold .fold-s b { color: var(--fg); }
+details.fold .chev { width: 10px; height: 10px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .25s; margin: -4px 4px 0 0; flex: none; }
+details.fold[open] .chev { transform: rotate(225deg); margin-top: 4px; }
+details.fold > :not(summary) { padding: 0 18px 16px; }
+.calc { font-size: .92rem; }
+
+.routes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.route { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: start; padding: 12px; border-radius: 14px; background: var(--surface-2); }
+.route .rank { width: 28px; height: 28px; font-size: .86rem; background: var(--surface); }
+.route.best { background: var(--go-soft); box-shadow: inset 0 0 0 1.5px var(--go); }
+.route.best .rank { background: var(--go); color: var(--on-accent); }
+.r-name { font-weight: 700; font-size: 1rem; }
+.r-sub { font-size: .86rem; color: var(--muted); }
+.r-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.r-min { text-align: right; white-space: nowrap; line-height: 1.1; }
+.r-min b { font-size: 1.5rem; font-weight: 600; }
+.r-min small { font-size: .82rem; color: var(--muted); margin-left: 2px; }
+.route .best-label { display: inline-block; font-size: .72rem; font-weight: 700; color: var(--go); margin-left: 6px; }
+.tag { font-size: .76rem; padding: 2px 8px; border-radius: 999px; margin: 0; }
+.tag.plain { background: var(--surface); color: var(--fg); }
+.route.best .tag.plain { background: var(--surface); }
+
+.brief { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.brief li { display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: baseline; font-size: .97rem; line-height: 1.55; }
+.brief li.nokey { grid-template-columns: 12px 1fr; }
+.brief li.nokey::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); align-self: center; justify-self: center; }
+.brief .bk { font-size: .78rem; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 0; text-align: center; }
+.brief-box.streaming { white-space: pre-wrap; font-size: .97rem; }
+.ck { font-size: .95rem; padding: 12px 0; }
+.ck .mark { width: 26px; height: 26px; font-size: .82rem; }
+.ck-k { font-size: .82rem; color: var(--muted); }
+.ck-v { font-weight: 600; }
+.ck-v .warn { color: var(--wait); }
+.count { font-size: .88rem; font-weight: 600; color: var(--muted); }
+.sound-name { font-weight: 700; font-size: 1.25rem; }
+.sound-why { font-size: .92rem; color: var(--muted); margin: 4px 0 12px; }
+
+.stepn { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: .8rem; font-weight: 700; font-family: var(--font-num); flex: none; }
+.events { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ev { border: 1.5px solid var(--line); background: transparent; border-radius: 14px; padding: 11px 12px; text-align: left; cursor: pointer; display: grid; gap: 2px; transition: background .2s, border-color .2s; }
+.ev b { font-size: .95rem; }
+.ev span { font-size: .82rem; color: var(--muted); }
+.ev[aria-pressed="true"] { background: var(--stop-soft); border-color: var(--stop); }
+.ev[aria-pressed="true"] b { color: var(--stop); }
+.ev.good[aria-pressed="true"] { background: var(--go-soft); border-color: var(--go); }
+.ev.good[aria-pressed="true"] b { color: var(--go); }
+.ev:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.when { margin: 0 0 14px; padding-left: 18px; display: grid; gap: 4px; font-size: .93rem; }
+.when b { font-family: var(--font-num); }
+.btn.wide { flex: 1; padding: 13px 16px; font-size: 1rem; }
+.chart text { font-size: 12px; }
+.chart-legend { display: flex; gap: 14px; font-size: .84rem; color: var(--muted); margin-top: 6px; }
+.chart-legend i { display: inline-block; width: 18px; height: 0; border-top: 2px dashed var(--muted); vertical-align: middle; margin-right: 6px; }
+.chart-legend i.solid { border-top: 3px solid var(--fg); }
+.log { gap: 0; font-size: .9rem; max-height: 320px; }
+.log .lrow { display: grid; grid-template-columns: 50px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.log .lrow:last-child { border-bottom: 0; }
+.log .lrow .t { font-family: var(--font-num); font-weight: 600; }
+.log .lrow div { display: block; padding: 0; border-bottom: 0; }
+.log .lrow .msg { font-weight: 600; margin-top: 2px; }
+.dec-time { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 8px; }
+.dec-time .k { font-size: .9rem; color: var(--muted); width: 100%; }
+.dec-time .big { font-size: 3rem; font-weight: 200; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.dec-time .was { font-size: .92rem; color: var(--muted); text-decoration: line-through; }
+.dec-note { font-size: .97rem; }
+.alts { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.alts li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: .92rem; }
+.alts li.best { background: var(--go-soft); box-shadow: inset 0 0 0 1.5px var(--go); }
+.alts li.blocked { opacity: .7; }
+.alts li.blocked .an { text-decoration: line-through; }
+.alts .why { display: block; font-size: .8rem; color: var(--muted); }
+.alts li.blocked .why { color: var(--stop); font-weight: 600; }
+.alts li.best .why { color: var(--go); font-weight: 700; }
+.alts .av { text-align: right; white-space: nowrap; font-family: var(--font-num); }
+.alts .av small { display: block; font-family: var(--font-body); font-size: .78rem; color: var(--muted); }
+
+.depart-card .k { font-size: .95rem; color: var(--muted); }
+.depart-card .big-time { margin: 6px 0 10px; }
+.pill { display: inline-block; font-size: .86rem; font-weight: 600; padding: 4px 12px; border-radius: 999px; background: var(--surface-2); }
+.info-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); font-size: .93rem; }
+.info-row small { display: block; font-size: .8rem; color: var(--muted); }
+.info-row b { font-size: 1.15rem; }
+.btn-col { display: grid; gap: 8px; margin-top: 14px; }
+.btn-col .btn { padding: 13px 16px; font-size: .98rem; }
+.ck.tap { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; }
+.ck.tap:last-child { border-bottom: 0; }
+.ck.tap.done .ck-v { color: var(--muted); text-decoration: line-through; }
+.progress.big { height: 8px; margin-bottom: 6px; }
+
+/* 실제 데이터 표시줄 */
+.live-bar { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--surface); font-size: .9rem; }
+.live-bar > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.live-bar p { color: var(--muted); font-size: .86rem; }
+.live-bar p b { color: var(--fg); font-weight: 600; }
+.live-bar .lerr { color: var(--stop); }
+.live-bar .ldot { width: 10px; height: 10px; border-radius: 50%; background: var(--off); flex: none; margin-top: 6px; }
+.live-bar.on .ldot { background: var(--go); }
+.live-bar.part .ldot { background: var(--wait); }
+.live-bar.err .ldot { background: var(--stop); }
+.live-bar.busy .ldot { background: var(--accent); animation: armPulse 1.2s ease-in-out infinite; }
 </style>
 
 <div class="theme-wave" id="themeWave" aria-hidden="true" hidden></div>
@@ -584,20 +746,19 @@ body.editing .nav, body.editing .fab { display: none; }
         <legend>이동 정보</legend>
         <div class="field"><label for="origin">출발지</label><input type="text" id="origin" autocomplete="off"></div>
         <div class="field"><label for="dest">목적지</label><input type="text" id="dest" autocomplete="off" placeholder="예: 학교, 회사, 학원"></div>
-        <div class="row2">
-          <div class="field"><label for="arrive">도착 시각</label><input type="time" id="arrive"></div>
-          <div class="field"><label for="mode">이동 수단</label>
-            <select id="mode">
-              <option value="walk">도보</option>
-              <option value="bus">버스</option>
-              <option value="subway">지하철·경전철</option>
-              <option value="bike">자전거</option>
-              <option value="car">자가용</option>
-              <option value="mixed">혼합</option>
-            </select>
-          </div>
+        <div class="field"><span class="lbl" id="arriveLbl">도착 시각</span><div class="tdial" data-for="arrive" role="group" aria-labelledby="arriveLbl"></div><input type="hidden" id="arrive"></div>
+        <div class="field"><label for="mode">이동 수단</label>
+          <select id="mode">
+            <option value="walk">도보</option>
+            <option value="bus">버스</option>
+            <option value="subway">지하철·경전철</option>
+            <option value="bike">자전거</option>
+            <option value="car">자가용</option>
+            <option value="mixed">혼합</option>
+          </select>
         </div>
         <div class="field"><label for="walk">목적지까지 걸리는 시간</label><div class="unit" id="walkBox"><input type="number" id="walk" min="1" max="240" inputmode="numeric"><span id="walkUnit">분</span></div>
+          <p class="field-err" id="walkErr" hidden>목적지까지 걸리는 시간을 적거나 'AI가 대신 작성해주기'를 체크해 주세요.</p>
           <label class="check ai-fill"><input type="checkbox" id="walkAi"> AI가 대신 작성해주기</label><p class="ai-note" id="walkNote"></p></div>
         <div class="field"><label for="speed">평균 걷기 속도</label><div class="unit" id="speedBox"><input type="number" id="speed" min="2" max="8" step="0.1" inputmode="decimal" placeholder="선택"><span id="speedUnit">km/h</span></div>
           <label class="check ai-fill"><input type="checkbox" id="speedAi"> AI가 대신 작성해주기</label></div>
@@ -611,7 +772,7 @@ body.editing .nav, body.editing .fab { display: none; }
           <div class="field"><label for="prep">준비 시간</label><div class="unit"><input type="number" id="prep" min="0" max="180" inputmode="numeric"><span>분</span></div></div>
           <div class="field"><label for="minSleep">최소 수면량</label><div class="unit"><input type="number" id="minSleep" min="3" max="12" step="0.5" inputmode="decimal"><span>시간</span></div></div>
         </div>
-        <div class="field"><label for="bed">오늘 취침 예정 시각</label><input type="time" id="bed"></div>
+        <div class="field"><span class="lbl" id="bedLbl">오늘 취침 예정 시각</span><div class="tdial" data-for="bed" role="group" aria-labelledby="bedLbl"></div><input type="hidden" id="bed"></div>
         <div class="field"><label for="memoIn">아침에 챙길 것·리마인드 할 것</label>
           <div class="memo-add"><input type="text" id="memoIn" maxlength="30" autocomplete="off" placeholder="예: 학생증, 우산 챙기기" enterkeyhint="done"><button class="btn primary" type="button" id="memoAdd">추가</button></div>
           <ul class="memo-list" id="memoList" aria-live="polite"></ul>
@@ -636,7 +797,6 @@ body.editing .nav, body.editing .fab { display: none; }
       <fieldset>
         <legend>똑똑한 기능</legend>
         <div class="switch has-tip"><span class="lab"><label for="bonus">덤 수면</label><button type="button" class="info" aria-label="덤 수면 설명 보기" aria-expanded="false">i</button></span><input type="checkbox" id="bonus" role="switch"><span class="tip" role="tooltip" hidden>AI가 도로 상황을 조사한 후 사용자가 수면을 더 취할 수 있도록 알람 시간을 늦춰줍니다.</span></div>
-        <div class="switch has-tip"><span class="lab"><label for="smart">스마트 웨이크업</label><button type="button" class="info" aria-label="스마트 웨이크업 설명 보기" aria-expanded="false">i</button></span><input type="checkbox" id="smart" role="switch"><span class="tip" role="tooltip" hidden>알람 20분 전부터 얕은 잠이 감지되면 그때 깨워 줍니다.</span></div>
       </fieldset>
 
       <fieldset>
@@ -705,7 +865,6 @@ const SOUNDS = [
 ];
 const DAYS = ["월", "화", "수", "목", "금", "토", "일"];
 const TIP_BONUS = "AI가 도로 상황을 조사한 후 사용자가 수면을 더 취할 수 있도록 알람 시간을 늦춰줍니다.";
-const TIP_SMART = "알람 20분 전부터 얕은 잠이 감지되면 그때 깨워 줍니다.";
 const MISSIONS = { none: "미션 없음", math: "수학 문제", tile: "색깔 타일 찾기", type: "문장 따라쓰기" };
 const missionText = (i) => i.mission === "none" ? MISSIONS.none : `${MISSIONS[i.mission] || MISSIONS.math} · ${i.level}단계 · ${i.count}개`;
 let memoItems = [];
@@ -721,11 +880,11 @@ const MODES = {
 };
 const STREETS = ["가야로", "해반천로", "김해대로", "금관대로", "분성로", "호계로", "활천로", "삼계로"];
 const WX = { "맑음": { walk: 1, prep: 0 }, "흐림": { walk: 1, prep: 0 }, "비": { walk: 1.2, prep: 5 }, "눈": { walk: 1.5, prep: 10 } };
-const SAFETY = 10, SIGNAL_SEC = 40, FIRST_VISIT = 5, ZONE_MIN = 1, RUSH_MIN = 3, RECOMMENDED_SLEEP = 8;
+const SAFETY = 10, SIGNAL_SEC = 40, CROSS_SEC = 20, FIRST_VISIT = 5, ZONE_MIN = 1, SPD_MIN = 1, RUSH_MIN = 3, RECOMMENDED_SLEEP = 8;
 const DEFAULTS = {
-  origin: "김해 내외동 우리집", dest: "창원컨벤션센터", arrive: "08:40", mode: "bus", walk: 45, speed: "", walkAi: false, speedAi: false,
+  origin: "김해 내외동 행정복지센터", dest: "창원컨벤션센터", arrive: "08:40", mode: "bus", walk: 45, speed: "", walkAi: false, speedAi: false,
   firstVisit: false, prep: 40, minSleep: 6, bed: "23:30", memo: "학생증\n보조배터리\n수행평가 보고서 제출",
-  sound: "bell", volume: 70, vibrate: true, days: [0, 1, 2, 3, 4], bonus: true, smart: true, mission: "math", level: 4, count: 3
+  sound: "bell", volume: 70, vibrate: true, days: [0, 1, 2, 3, 4], bonus: true, mission: "math", level: 4, count: 3
 };
 
 /* ---------- 상태 ---------- */
@@ -740,8 +899,8 @@ const S = {
 /* ---------- 알람 여러 개 ---------- */
 const SEED = () => [
   { id: "a1", name: "해커톤 2일차", on: true, v: 4, inp: { ...DEFAULTS, days: [] } },
-  { id: "a2", name: "학교 등교", on: true, v: 4, inp: { ...DEFAULTS, dest: "김해 ○○고등학교", arrive: "08:10", mode: "walk", walk: 18, prep: 35, memo: "학생증\n체육복\n수학 익힘책", mission: "type", level: 2, count: 2 } },
-  { id: "a3", name: "토요일 학원", on: false, v: 4, inp: { ...DEFAULTS, dest: "내외동 학원가", arrive: "10:00", prep: 30, days: [5], walk: 20, memo: "학원 교재\n물병", mission: "tile", level: 3, bonus: false } }
+  { id: "a2", name: "학교 등교", on: true, v: 4, inp: { ...DEFAULTS, dest: "김해고등학교", arrive: "08:10", mode: "walk", walk: 18, prep: 35, memo: "학생증\n체육복\n수학 익힘책", mission: "type", level: 2, count: 2 } },
+  { id: "a3", name: "토요일 학원", on: false, v: 4, inp: { ...DEFAULTS, dest: "김해 내외동 학원", arrive: "10:00", prep: 30, days: [5], walk: 20, memo: "학원 교재\n물병", mission: "tile", level: 3, bonus: false } }
 ];
 function loadAlarms() {
   let list = store.get("alarms", null);
@@ -752,7 +911,7 @@ function loadAlarms() {
   // v3까지는 '도보 시간'만 저장했으니 타는 시간을 더해 '목적지까지 걸리는 시간'으로 옮김
   const RIDE_AVG = { bus: 28, subway: 26, car: 24, mixed: 30 };
   return list.map((a) => {
-    const inp = { ...DEFAULTS, ...a.inp }; delete inp.contact;
+    const inp = { ...DEFAULTS, ...a.inp }; delete inp.contact; delete inp.smart;
     if (a.v !== 4) { inp.walk = Math.round(inp.walk + (RIDE_AVG[inp.mode] || 0)); if (!MISSIONS[inp.mission]) inp.mission = "tile"; }
     return { id: String(a.id), name: String(a.name || "알람"), on: a.on !== false, v: 4, inp };
   });
@@ -810,7 +969,8 @@ function buildInputs() {
 function writeInputs(v) {
   for (const k of ["origin", "dest", "arrive", "mode", "walk", "speed", "prep", "minSleep", "bed", "sound", "volume", "level"]) $("#" + k).value = v[k];
   memoItems = String(v.memo || "").split("\n").map((x) => x.trim()).filter(Boolean); $("#memoIn").value = ""; renderMemo();
-  for (const k of ["firstVisit", "vibrate", "bonus", "smart", "walkAi", "speedAi"]) $("#" + k).checked = !!v[k];
+  for (const k of ["firstVisit", "vibrate", "bonus", "walkAi", "speedAi"]) $("#" + k).checked = !!v[k];
+  setDial("arrive", v.arrive); setDial("bed", v.bed); clearWalkErr();
   DAYS.forEach((_, i) => { $("#d" + i).checked = v.days.includes(i); });
   document.querySelectorAll('input[name="mission"]').forEach((r) => { r.checked = r.value === v.mission; });
   $("#volOut").textContent = v.volume; $("#walkNote").textContent = "";
@@ -826,10 +986,75 @@ function readInputs() {
     bed: $("#bed").value || "23:30", memo: memoItems.join("\n"),
     sound: $("#sound").value, volume: n("volume", 70), vibrate: $("#vibrate").checked,
     days: DAYS.map((_, i) => i).filter((i) => $("#d" + i).checked),
-    bonus: $("#bonus").checked, smart: $("#smart").checked,
+    bonus: $("#bonus").checked,
     mission: (document.querySelector('input[name="mission"]:checked') || { value: "math" }).value,
     level: Math.min(7, Math.max(1, n("level", 4))), count: Math.min(10, Math.max(1, n("count", 3)))
   };
+}
+
+/* ---------- 실제 데이터 (카카오맵 경로 · 기상청 예보) ---------- */
+// 중계 서버(Cloudflare Worker) 주소. 비어 있으면 시연용 시뮬레이션만 씀. 주소 뒤에 ?api=서버주소 를 붙여 열어도 설정됨
+const LIVE_API_DEFAULT = "https://wake-api.doin4171.workers.dev";
+const LIVE_API = (() => {
+  try { const q = new URLSearchParams(location.search).get("api"); if (q !== null) store.set("api", q.trim()); } catch { /* 무시 */ }
+  return (store.get("api", "") || LIVE_API_DEFAULT).replace(/\/+$/, "");
+})();
+const LIVE_CAN = () => !!LIVE_API && (/\.github\.io$/.test(location.hostname) || location.hostname === "localhost");
+const LIVE = { state: "off", msg: "", at: null, ...store.get("live", { geo: {}, routes: {}, wx: {} }) };
+const KMODE = { walk: "walk", bike: "bike", bus: "transit", subway: "transit", mixed: "transit", car: "car" };
+const liveKey = (inp) => `${inp.origin}|${inp.dest}|${inp.mode}`;
+const saveLive = () => store.set("live", { geo: LIVE.geo, routes: LIVE.routes, wx: LIVE.wx });
+async function liveGet(path) {
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 10000);
+  try {
+    const r = await fetch(LIVE_API + path, { signal: ctl.signal });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `서버 오류 ${r.status}`);
+    return j;
+  } catch (e) { throw new Error(e.name === "AbortError" ? "서버 응답이 너무 늦어요" : /fetch/i.test(e.message) ? "중계 서버에 연결하지 못했어요" : e.message); }
+  finally { clearTimeout(tm); }
+}
+async function liveGeo(q) {
+  if (LIVE.geo[q]) return LIVE.geo[q];
+  const g = await liveGet("/geo?q=" + encodeURIComponent(q)); LIVE.geo[q] = g; saveLive(); return g;
+}
+const ymdOf = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+let liveSeq = 0;
+async function refreshLive() {
+  if (!LIVE_CAN()) return;
+  const my = ++liveSeq; const inp = S.inp; const key = liveKey(inp);
+  LIVE.state = "busy"; LIVE.msg = ""; if (S.plan) renderPlan();
+  const errs = [];
+  try {
+    const [o, d] = await Promise.all([liveGeo(inp.origin), liveGeo(inp.dest)]);
+    // 알람이 울릴 날 기준 (알람이 없으면 내일)
+    const at = nextRing(selAlarm()) || tomorrow(); const ymd = ymdOf(at);
+    const dep = S.plan ? Math.max(0, Math.round(S.plan.t.depart)) : 480;
+    const depTxt = ymd + String(Math.floor(dep / 60) % 24).padStart(2, "0") + String(dep % 60).padStart(2, "0");
+    const [w, r] = await Promise.allSettled([
+      liveGet(`/weather?x=${o.x}&y=${o.y}&date=${ymd}`),
+      liveGet(`/route?mode=${KMODE[inp.mode]}&sx=${o.x}&sy=${o.y}&ex=${d.x}&ey=${d.y}${inp.mode === "car" ? "&depart=" + depTxt : ""}`)
+    ]);
+    if (w.status === "fulfilled") LIVE.wx[inp.origin] = { ...w.value, source: "live", date: ymd, at: Date.now() }; else errs.push("날씨: " + w.reason.message);
+    if (r.status === "fulfilled") LIVE.routes[key] = { list: r.value.routes, o, d, at: Date.now() }; else errs.push("경로: " + r.reason.message);
+    saveLive();
+  } catch (e) { errs.push(e.message); }
+  if (my !== liveSeq) return;
+  LIVE.state = errs.length >= 2 || (errs.length && !LIVE.routes[key] && !LIVE.wx[inp.origin]) ? "err" : errs.length ? "part" : "on";
+  LIVE.msg = errs.join(" · "); LIVE.at = new Date();
+  if (key === liveKey(S.inp)) { buildPlan(); renderAll(); }
+}
+// 계획 화면 맨 위: 지금 계산에 쓴 데이터가 진짜인지 시연용인지 알려 줌
+function liveBarHtml() {
+  const inp = S.inp; const lr = LIVE.routes[liveKey(inp)], lw = LIVE.wx[inp.origin];
+  if (!LIVE_CAN()) return `<div class="live-bar"><span class="ldot"></span><div><b>시연 모드</b><p>경로와 날씨는 가상의 값이에요. 실제 계산은 GitHub 사이트에서 돼요.</p></div></div>`;
+  if (LIVE.state === "busy") return `<div class="live-bar busy"><span class="ldot"></span><div><b>실제 데이터 받는 중…</b><p>카카오맵 경로와 기상청 예보를 불러오고 있어요.</p></div></div>`;
+  const parts = [lr ? "카카오맵 경로" : "", lw ? "기상청 예보" : ""].filter(Boolean);
+  const where = lr ? `<p>출발 <b>${esc(lr.o.name)}</b> → 도착 <b>${esc(lr.d.name)}</b></p>` : "";
+  const err = LIVE.msg ? `<p class="lerr">${esc(LIVE.msg)}</p>` : "";
+  const head = parts.length ? `실제 데이터 · ${parts.join(" + ")}` : "실제 데이터를 못 받았어요";
+  const sub = !lr ? `<p>경로는 시뮬레이션 값으로 계산했어요.</p>` : !lw ? `<p>날씨는 평년 값으로 계산했어요.</p>` : "";
+  return `<div class="live-bar ${parts.length === 2 ? "on" : parts.length ? "part" : "err"}"><span class="ldot"></span><div><b>${head}</b>${where}${sub}${err}</div><button class="btn small" type="button" id="liveBtn">새로고침</button></div>`;
 }
 
 /* ---------- 날씨 (규칙 기반 예측) ---------- */
@@ -845,13 +1070,19 @@ function ruleWeather(origin) {
   return { condition: c, tmin, tmax, precip, note: `${d.getMonth() + 1}월 평년 기온과 강수 확률로 추정한 값이에요.`, source: "rule", date: key };
 }
 function activeWeather() {
-  const w = S.weather || ruleWeather(S.inp.origin);
+  const lw = LIVE_CAN() && LIVE.wx[S.inp.origin];
+  const w = lw && Date.now() - lw.at < 12 * 3600e3 ? lw : S.weather || ruleWeather(S.inp.origin);
   if (S.wxOverride !== "auto") return { ...w, condition: S.wxOverride, source: "manual", note: "시연용으로 날씨를 직접 바꿨어요." };
   return w;
 }
 
 /* ---------- 경로 (시뮬레이션) ---------- */
 function genRoutes(inp) {
+  const lv = LIVE_CAN() && LIVE.routes[liveKey(inp)];
+  if (lv && lv.list && lv.list.length) return lv.list.map((x, i) => ({
+    id: i, live: true, L: x, name: x.name, street: x.via ? x.via.replace(/ 승차$/, "") + " 부근 도로" : `${x.name} 경로 위 도로`,
+    km: x.km, rideF: 1, walkF: 1, head: 0, signals: x.cross, cross: x.cross, tags: { acc: false, kid: false, spd: false }, first: null
+  }));
   const M = MODES[inp.mode]; const r = rng(hash(inp.origin + "|" + inp.dest + "|" + inp.mode));
   const streets = [...STREETS].sort(() => r() - .5);
   return M.names.map((name, i) => {
@@ -869,6 +1100,7 @@ function genRoutes(inp) {
 }
 function evalRoute(rt, inp, w, mod = {}) {
   const wx = WX[w.condition] || WX["맑음"];
+  if (rt.live) return evalLive(rt, inp, wx, mod);
   const share = WALK_SHARE[inp.mode] ?? .3;
   let walkBase = inp.walk * share * rt.walkF;
   const speedAdj = inp.speed !== "" && inp.speed > 0;
@@ -879,14 +1111,35 @@ function evalRoute(rt, inp, w, mod = {}) {
   const factor = mod.factor || 1;
   const ride = inp.walk * (1 - share) * rt.rideF * (inp.mode === "bike" ? wx.walk : 1) * factor + (mod.extra?.[rt.id] || 0);
   const zones = ((rt.tags.acc ? 1 : 0) + (rt.tags.kid ? 1 : 0)) * ZONE_MIN;
+  // 횡단보도는 하나에 20초, 속도 제한 구역은 지나가면 1분
+  const crossMin = rt.cross * CROSS_SEC / 60;
+  const spdMin = rt.tags.spd ? SPD_MIN : 0;
   const fv = inp.firstVisit ? FIRST_VISIT : 0;
-  let total = walk + sigMin + wait + ride + zones + fv;
+  let total = walk + sigMin + crossMin + wait + ride + zones + spdMin + fv;
   // 출발 시각을 대략 잡아 혼잡 시간대(07:20~08:30)에 타면 대기 +3분
   const arr = toMin(inp.arrive);
-  const board = arr - total - SAFETY + (walk + sigMin) / 2;
+  const board = arr - total - SAFETY + (walk + sigMin + crossMin) / 2;
   const rush = rt.head > 0 && board >= 440 && board <= 510 ? RUSH_MIN : 0;
   total += rush;
-  return { ...rt, share, walkBase, walk, sigMin, wait, ride, zones, fv, rush, speedAdj, total: Math.ceil(total), blocked: mod.blocked?.get(rt.id) || "" };
+  return { ...rt, share, walkBase, walk, sigMin, crossMin, wait, ride, zones, spdMin, fv, rush, speedAdj, total: Math.ceil(total), blocked: mod.blocked?.get(rt.id) || "" };
+}
+// 카카오맵 실제 경로: 걷기·탑승·기다림은 카카오 값, 신호 대기만 횡단보도 수로 추정
+function evalLive(rt, inp, wx, mod) {
+  const L = rt.L;
+  const speedAdj = inp.speed !== "" && inp.speed > 0 && L.walkKm > 0;
+  const walkBase = speedAdj ? L.walkKm / inp.speed * 60 : L.walkMin;
+  const walk = walkBase * wx.walk;
+  const sigMin = L.cross * SIGNAL_SEC / 60, crossMin = 0;
+  const transit = KMODE[inp.mode] === "transit";
+  const waitEst = transit && L.waitMin == null;
+  const wait = transit ? (L.waitMin != null ? L.waitMin : ((L.transfers || 0) + 1) * 4) : 0;
+  const ride = L.rideMin * (inp.mode === "bike" ? wx.walk : 1) * (mod.factor || 1) + (mod.extra?.[rt.id] || 0);
+  const fv = inp.firstVisit ? FIRST_VISIT : 0;
+  let total = walk + sigMin + wait + ride + fv;
+  const board = toMin(inp.arrive) - total - SAFETY + walk / 2;
+  const rush = transit && board >= 440 && board <= 510 ? RUSH_MIN : 0;
+  total += rush;
+  return { ...rt, share: null, walkBase, walk, sigMin, crossMin, wait, waitEst, ride, zones: 0, spdMin: 0, fv, rush, speedAdj, total: Math.ceil(total), blocked: mod.blocked?.get(rt.id) || "" };
 }
 function rankRoutes(routes, inp, w, mod) {
   const ev = routes.map((rt) => evalRoute(rt, inp, w, mod));
@@ -907,9 +1160,9 @@ function computeTimes(best, inp, w) {
   const recBed = latest - RECOMMENDED_SLEEP * 60;
   const minBed = latest - inp.minSleep * 60;
   const sleep = latest - bed;
-  const board = depart + (best.walk + best.sigMin) / 2 + best.wait;
+  const board = depart + (best.walk + best.sigMin + best.crossMin) / 2 + best.wait;
   const firstFail = best.first != null && board < best.first;
-  const firstLate = firstFail ? Math.ceil(best.first + best.ride + (best.walk + best.sigMin) / 2 + best.zones + best.fv - arr) : 0;
+  const firstLate = firstFail ? Math.ceil(best.first + best.ride + (best.walk + best.sigMin + best.crossMin) / 2 + best.zones + best.spdMin + best.fv - arr) : 0;
   return { arr, depart, prep, wxPrep: wx.prep, latest, earliest, bed, short, recBed, minBed, sleep, board, firstFail, firstLate, brief: recBed - 60 };
 }
 function taxiOption(best, inp, mod = {}) {
@@ -968,7 +1221,7 @@ function wxIcon(c) {
   const body = c === "맑음" ? sun : c === "흐림" ? cloud(4) : c === "비" ? cloud(-2) + drops : cloud(-2) + flakes;
   return `<svg viewBox="0 0 54 54" role="img" aria-label="${c}">${body}</svg>`;
 }
-const srcTag = (w) => w.source === "ai" ? `<span class="src ai">AI 예측</span>` : w.source === "manual" ? `<span class="src">직접 선택</span>` : `<span class="src">규칙 예측</span>`;
+const srcTag = (w) => w.source === "live" ? `<span class="src ai">기상청 예보</span>` : w.source === "ai" ? `<span class="src ai">AI 예측</span>` : w.source === "manual" ? `<span class="src">직접 선택</span>` : `<span class="src">규칙 예측</span>`;
 const soundName = (id) => (SOUNDS.find((s) => s.id === id) || SOUNDS[0]).name;
 
 /* ---------- 추천 알람음 ---------- */
@@ -985,33 +1238,52 @@ function recommendSound() {
 function renderPlan() {
   const { inp, w, ranked, best, t, taxi } = S.plan;
   const mode = MODES[inp.mode];
+  // 알림: 한 줄 결론 + 한 줄 근거
   const alerts = [];
-  if (t.short) alerts.push(["stop", "수면 부족", `취침 ${fmt(t.bed)} 기준으로 최소 수면 ${inp.minSleep}시간을 지키면 ${fmt(t.earliest)}에 일어나야 하는데, 제시간에 도착하려면 ${fmt(t.latest)}에는 일어나야 해요. <b>${fmtDur(t.short)}</b> 모자라요. ${fmt(t.minBed)} 전에 자거나 더 빠른 이동 수단을 골라 주세요.`]);
-  else alerts.push(["go", "수면 OK", `${fmt(t.bed)}에 자면 <b>${fmtDur(t.sleep)}</b> 자요. 최소 수면 ${inp.minSleep}시간보다 ${fmtDur(t.latest - t.earliest)} 여유가 있어요.`]);
-  if (t.firstFail) alerts.push(["stop", "첫차", `${fmt(t.board)}에 타야 하는데 첫차는 ${fmt(best.first)}이에요. 첫차를 타면 약 ${t.firstLate}분 늦어요. 택시는 약 ${taxi.total}분, 예상 ${taxi.fare.toLocaleString()}원이에요.`]);
-  else if (best.first != null) alerts.push(["go", "첫차", `첫차 ${fmt(best.first)} 이후인 ${fmt(t.board)}쯤 타요. 배차 간격은 ${best.head}분이에요.`]);
-  if (WX[w.condition].prep) alerts.push(["wait", w.condition, `${w.condition} 예보라 도보 시간 ×${WX[w.condition].walk}, 준비 시간 +${WX[w.condition].prep}분을 더했어요.`]);
-  if (best.rush) alerts.push(["wait", "혼잡", `${fmt(t.board)}은 사람이 몰리는 시간대(07:20~08:30)라 대기 시간 +${RUSH_MIN}분을 더했어요.`]);
+  if (t.short) alerts.push(["stop", "수면 부족", `최소 수면보다 <b>${fmtDur(t.short)}</b> 모자라요.`, `${fmt(t.minBed)} 전에 자거나 더 빠른 이동 수단을 골라 주세요.`]);
+  else alerts.push(["go", "수면 OK", `${fmt(t.bed)}에 자면 <b>${fmtDur(t.sleep)}</b> 자요.`, `최소 수면 ${inp.minSleep}시간보다 ${fmtDur(t.latest - t.earliest)} 여유`]);
+  if (t.firstFail) alerts.push(["stop", "첫차", `첫차(${fmt(best.first)})를 타면 약 <b>${t.firstLate}분</b> 늦어요.`, `택시는 약 ${taxi.total}분 · 예상 ${taxi.fare.toLocaleString()}원`]);
+  else if (best.first != null) alerts.push(["go", "첫차", `<b class="num">${fmt(t.board)}</b>쯤 타면 돼요.`, `첫차 ${fmt(best.first)} · 배차 ${best.head}분`]);
+  if (WX[w.condition].prep) alerts.push(["wait", w.condition, `${w.condition} 예보라 시간을 더 잡았어요.`, `도보 ×${WX[w.condition].walk} · 준비 +${WX[w.condition].prep}분`]);
+  if (best.rush) alerts.push(["wait", "혼잡", `출근 시간대라 대기 <b>+${RUSH_MIN}분</b>을 더했어요.`, `${fmt(t.board)} 탑승 · 붐비는 시간 07:20~08:30`]);
 
-  // 타임라인 막대
-  const segs = [
-    ["prep", "준비", t.prep], ["walk", "도보·신호", best.walk + best.sigMin],
-    ["wait", "대기", best.wait + best.rush], ["ride", rideWord(inp.mode), best.ride],
-    ["extra", "구역·길찾기", best.zones + best.fv], ["buf", "안전", SAFETY]
-  ].filter((s) => s[2] > 0.05);
-  const span = t.arr - t.latest;
-  const bar = segs.map(([c, l, m]) => `<div class="seg ${c}" style="flex:${m}" title="${l} ${Math.round(m)}분">${m / span > .09 ? l : ""}</div>`).join("");
-  const pos = (m) => ((m - t.latest) / span * 100).toFixed(2) + "%";
-  const ticks = `<span style="left:0"><b>${fmt(t.latest)}</b>알람</span><span style="left:${pos(t.depart)}"><b>${fmt(t.depart)}</b>출발</span><span style="left:100%"><b>${fmt(t.arr - SAFETY)} → ${fmt(t.arr)}</b>도착 예상 → 마감</span>`;
+  // 알람부터 도착까지: 얇은 비율 막대 + 세로 순서표
+  const moveMin = best.walk + best.sigMin + best.crossMin, waitMin = best.wait + best.rush, extraMin = best.zones + best.spdMin + best.fv;
+  const segs = [["prep", t.prep], ["walk", moveMin], ["wait", waitMin], ["ride", best.ride], ["extra", extraMin], ["buf", SAFETY]].filter((x) => x[1] > 0.05);
+  const bar = segs.map(([c, m]) => `<div class="seg ${c}" style="flex:${m}"></div>`).join("");
+  const mins = (m) => Math.max(1, Math.round(m)) + "분";
+  const pt = (c, lb, tm, end) => `<li class="pt${end ? " end" : ""}"><span class="dot" style="--c:${c}"></span><span class="lb">${lb}</span><span class="tm">${tm}</span></li>`;
+  const du = (c, lb, m) => m > 0.05 ? `<li class="du"><span class="rail seg ${c}"></span><span class="lb">${lb}</span><span class="mn">${mins(m)}</span></li>` : "";
+  const flow = [
+    pt("var(--accent)", "알람 · 일어나기", fmt(t.latest)),
+    du("prep", "씻고 준비하기", t.prep),
+    pt("var(--fg)", "집에서 출발", fmt(t.depart)),
+    du("walk", "걷기 · 신호등 · 횡단보도", moveMin),
+    du("wait", "정류장에서 기다리기", waitMin),
+    du("ride", inp.mode === "bike" ? "자전거 타기" : `${mode.label} ${rideWord(inp.mode)}`, best.ride),
+    du("extra", "보호구역 · 길찾기", extraMin),
+    pt("var(--go)", "도착 예상", fmt(t.arr - SAFETY)),
+    du("buf", "안전 여유", SAFETY),
+    pt("var(--wait)", `도착 마감<small>${esc(inp.dest)}</small>`, fmt(t.arr), true)
+  ].join("");
 
-  // 계산 근거
+  // 계산 근거 (접어 둠)
   const wx = WX[w.condition];
-  const calc = [
+  const calc = best.live ? [
+    best.walk ? [`걷기 ${best.L.walkKm}km (카카오맵)${best.speedAdj ? ` ÷ ${inp.speed}km/h` : ""}${wx.walk !== 1 ? ` × ${w.condition} ${wx.walk}` : ""}`, best.walk] : null,
+    best.signals ? [`신호 대기: 횡단보도 ${best.signals}곳 × ${SIGNAL_SEC}초 (추정)`, best.sigMin] : null,
+    best.wait ? [`정류장 대기${best.waitEst ? " (추정)" : " (카카오맵)"}${best.rush ? ` + 혼잡 ${RUSH_MIN}분` : ""}`, best.wait + best.rush] : null,
+    best.ride ? [`${inp.mode === "bike" ? "자전거" : inp.mode === "car" ? "운전 (카카오 교통 예측)" : `${esc(best.name)} 탑승`} (카카오맵)${inp.mode === "bike" && wx.walk !== 1 ? ` × ${w.condition} ${wx.walk}` : ""}`, best.ride] : null,
+    best.fv ? [`처음 가보는 곳 길찾기`, best.fv] : null,
+    [`안전 버퍼`, SAFETY]
+  ].filter(Boolean) : [
     best.share ? [`걷는 부분 ${r1(inp.walk * best.share)}분${best.walkF !== 1 ? ` × 경로 ${best.walkF}` : ""}${best.speedAdj ? ` × (4.8 ÷ ${inp.speed}km/h)` : ""}${wx.walk !== 1 ? ` × ${w.condition} ${wx.walk}` : ""}`, best.walk] : null,
     [`신호등 ${best.signals}개 × ${SIGNAL_SEC}초`, best.sigMin],
+    [`횡단보도 ${best.cross}개 × ${CROSS_SEC}초`, best.crossMin],
     best.head ? [`배차 ${best.head}분의 절반 대기${best.rush ? ` + 혼잡 ${RUSH_MIN}분` : ""}`, best.wait + best.rush] : null,
     best.ride ? [`${inp.mode === "bike" ? "자전거" : `${mode.label} ${rideWord(inp.mode)}`} ${r1(inp.walk * (1 - best.share))}분 × 경로 ${best.rideF}${inp.mode === "bike" && wx.walk !== 1 ? ` × ${w.condition} ${wx.walk}` : ""} (${esc(best.name)})`, best.ride] : null,
     best.zones ? [`사고 다발·어린이 보호구역 ${best.zones}곳 × ${ZONE_MIN}분`, best.zones] : null,
+    best.spdMin ? [`속도 제한 구역 1곳 × ${SPD_MIN}분`, best.spdMin] : null,
     best.fv ? [`처음 가보는 곳 길찾기`, best.fv] : null,
     [`안전 버퍼`, SAFETY]
   ].filter(Boolean);
@@ -1022,78 +1294,104 @@ function renderPlan() {
   const lo = Math.min(t.earliest, t.latest) - 30, hi = Math.max(t.earliest, t.latest) + 30;
   const p = (m) => ((m - lo) / (hi - lo) * 100).toFixed(2) + "%";
   const rangeHtml = t.short
-    ? `<div class="range"><div class="fill bad" style="left:${p(t.latest)};right:calc(100% - ${p(t.earliest)})"></div><span class="pin" style="left:${p(t.latest)}">${fmt(t.latest)}</span><span class="pin" style="left:${p(t.earliest)}">${fmt(t.earliest)}</span><span class="pin below" style="left:${p(t.latest)}">가장 늦은 알람</span><span class="pin below" style="left:${p(t.earliest)}">최소 수면 기준</span></div><p class="small muted">두 시각이 뒤집혀서 AI가 움직일 수 있는 범위가 없어요. 늦은 알람이 우선이라 ${fmt(t.latest)}에 울려요.</p>`
-    : `<div class="range"><div class="fill" style="left:${p(t.earliest)};right:calc(100% - ${p(t.latest)})"></div><span class="pin" style="left:${p(t.earliest)}">${fmt(t.earliest)}</span><span class="pin" style="left:${p(t.latest)}">${fmt(t.latest)}</span><span class="pin below" style="left:${p(t.earliest)}">가장 이른 알람</span><span class="pin below" style="left:${p(t.latest)}">가장 늦은 알람</span></div><p class="small muted">가장 이른 알람 = 취침 ${fmt(t.bed)} + 최소 수면 ${inp.minSleep}시간. 가장 늦은 알람 = 출발 마감 ${fmt(t.depart)} − 준비 ${t.prep}분. AI는 이 사이에서만 알람을 옮겨요.</p>`;
+    ? `<div class="range"><div class="fill bad" style="left:${p(t.latest)};right:calc(100% - ${p(t.earliest)})"></div><span class="pin" style="left:${p(t.latest)}">${fmt(t.latest)}</span><span class="pin" style="left:${p(t.earliest)}">${fmt(t.earliest)}</span><span class="pin below" style="left:${p(t.latest)}">늦은 알람</span><span class="pin below" style="left:${p(t.earliest)}">최소 수면</span></div>
+      <p class="dec-note">두 시각이 뒤집혀서 AI가 움직일 수 있는 범위가 없어요. 지각하지 않는 게 먼저라 <b class="num">${fmt(t.latest)}</b>에 울려요.</p>`
+    : `<div class="range"><div class="fill" style="left:${p(t.earliest)};right:calc(100% - ${p(t.latest)})"></div><span class="pin" style="left:${p(t.earliest)}">${fmt(t.earliest)}</span><span class="pin" style="left:${p(t.latest)}">${fmt(t.latest)}</span><span class="pin below" style="left:${p(t.earliest)}">가장 이른</span><span class="pin below" style="left:${p(t.latest)}">가장 늦은</span></div>
+      <dl class="kv">
+        <div><dt><span>가장 이른 알람</span><span class="num">${fmt(t.earliest)}</span></dt><dd>취침 ${fmt(t.bed)} + 최소 수면 ${inp.minSleep}시간</dd></div>
+        <div><dt><span>가장 늦은 알람</span><span class="num">${fmt(t.latest)}</span></dt><dd>출발 마감 ${fmt(t.depart)} − 준비 ${t.prep}분</dd></div>
+      </dl>`;
 
-  const rows = ranked.map((r, i) => `<tr class="${i === 0 ? "best" : ""}">
-      <td><span class="rank">${i + 1}</span></td><td>${esc(r.name)}<div class="small muted">${esc(r.street)} 경유</div></td>
-      <td class="num"><b>${r.total}분</b></td><td class="num">${r.km}km</td><td class="num">${r.signals}개</td><td class="num">${r.cross}개</td>
-      <td>${r.tags.acc ? `<span class="tag acc">사고 다발</span>` : ""}${r.tags.kid ? `<span class="tag kid">어린이 보호</span>` : ""}${r.tags.spd ? `<span class="tag spd">속도 제한</span>` : ""}${!r.tags.acc && !r.tags.kid && !r.tags.spd ? `<span class="muted small">없음</span>` : ""}</td>
-      <td>${r.first != null ? `첫차 <span class="num">${fmt(r.first)}</span><div class="small muted">배차 ${r.head}분</div>` : `<span class="muted small">해당 없음</span>`}</td></tr>`).join("");
+  const routes = ranked.map((r, i) => {
+    if (r.live) {
+      const lt = [`<span class="tag plain">횡단보도 ${r.cross}</span>`];
+      if (r.L.transfers) lt.push(`<span class="tag plain">환승 ${r.L.transfers}회</span>`);
+      if (r.L.fare) lt.push(`<span class="tag plain">${inp.mode === "car" ? "택시" : "요금"} ${r.L.fare.toLocaleString()}원</span>`);
+      return `<li class="route ${i === 0 ? "best" : ""}"><span class="rank">${i + 1}</span>
+      <div><div class="r-name">${esc(r.name)}${i === 0 ? `<span class="best-label">추천</span>` : ""}</div><div class="r-sub">${r.L.via ? esc(r.L.via) + " · " : ""}${r.km}km</div><div class="r-tags">${lt.join("")}</div></div>
+      <div class="r-min"><b class="num">${r.total}</b><small>분</small></div></li>`;
+    }
+    const tags = [`<span class="tag plain">신호등 ${r.signals}</span>`, `<span class="tag plain">횡단보도 ${r.cross}</span>`];
+    if (r.tags.acc) tags.push(`<span class="tag acc">사고 다발</span>`);
+    if (r.tags.kid) tags.push(`<span class="tag kid">어린이 보호</span>`);
+    if (r.tags.spd) tags.push(`<span class="tag spd">속도 제한</span>`);
+    if (r.first != null) tags.push(`<span class="tag plain">첫차 ${fmt(r.first)} · 배차 ${r.head}분</span>`);
+    return `<li class="route ${i === 0 ? "best" : ""}"><span class="rank">${i + 1}</span>
+      <div><div class="r-name">${esc(r.name)}${i === 0 ? `<span class="best-label">추천</span>` : ""}</div><div class="r-sub">${esc(r.street)} 경유 · ${r.km}km</div><div class="r-tags">${tags.join("")}</div></div>
+      <div class="r-min"><b class="num">${r.total}</b><small>분</small></div></li>`;
+  }).join("");
 
   $("#tab-plan").innerHTML = `
     <h2 class="page-title">출근 계획</h2>
     ${pickerHtml()}
+    ${liveBarHtml()}
     <div class="hero">
       <div>
         <p class="eyebrow">${esc(inp.origin)} → ${esc(inp.dest)} · ${mode.label}</p>
         <p class="big-time">${fmt(t.latest)}</p>
-        <p class="sub">추천 알람 (가장 늦게 일어나도 되는 시각)${inp.smart ? `<br>스마트 웨이크업 구간 <span class="num">${fmt(t.latest - 20)}~${fmt(t.latest)}</span>` : ""}</p>
+        <p class="sub">추천 알람 · 이 시각에 일어나면 늦지 않아요</p>
       </div>
       <div class="stats">
-        <div class="stat"><div class="k">권장 취침</div><div class="v">${fmt(t.recBed)}<small>${RECOMMENDED_SLEEP}시간 수면</small></div></div>
-        <div class="stat"><div class="k">최소 수면 마감 취침</div><div class="v">${fmt(t.minBed)}</div></div>
         <div class="stat"><div class="k">출발 마감</div><div class="v">${fmt(t.depart)}</div></div>
         <div class="stat"><div class="k">도착 예상</div><div class="v">${fmt(t.arr - SAFETY)}<small>마감 ${fmt(t.arr)}</small></div></div>
+        <div class="stat"><div class="k">권장 취침 (${RECOMMENDED_SLEEP}시간)</div><div class="v">${fmt(t.recBed)}</div></div>
+        <div class="stat"><div class="k">늦어도 이때 취침</div><div class="v">${fmt(t.minBed)}</div></div>
       </div>
     </div>
-    <div class="alerts">${alerts.map(([c, b, m]) => `<div class="alert ${c}"><span class="badge">${b}</span><span>${m}</span></div>`).join("")}</div>
+    <div class="alerts">${alerts.map(([c, b, m, sub]) => `<div class="alert ${c}"><span class="badge">${b}</span><div class="alert-txt"><p>${m}</p>${sub ? `<p class="alert-sub">${sub}</p>` : ""}</div></div>`).join("")}</div>
     <div class="card">
       <div class="card-h"><h3>알람부터 도착까지</h3><span class="src sim">계산값</span></div>
-      <div class="bar">${bar}</div>
-      <div class="ticks">${ticks}</div>
-      <div class="legend"><span><i style="background:var(--prep)"></i>준비 ${t.prep}분</span><span><i style="background:var(--go)"></i>도보·신호</span><span><i style="background:color-mix(in srgb,var(--go) 60%,var(--surface))"></i>대기</span><span><i style="background:color-mix(in srgb,var(--go) 80%,var(--fg))"></i>${rideWord(inp.mode)}</span><span><i style="background:var(--wait)"></i>안전 버퍼 ${SAFETY}분</span></div>
-    </div>
-    <div class="grid2">
-      <div class="card">
-        <div class="card-h"><h3>내일 아침 날씨</h3>${srcTag(w)}</div>
-        <div class="wx">${wxIcon(w.condition)}<div><div class="temp">${w.tmin}° / ${w.tmax}°</div><div class="desc">${w.condition} · 강수 ${w.precip}%</div></div>
-          <label class="wx-override" for="wxSel">시연용 <select id="wxSel"><option value="auto">예측대로</option><option>맑음</option><option>흐림</option><option>비</option><option>눈</option></select></label></div>
-        <p class="small muted" style="margin-top:8px">${esc(w.note || "")}</p>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>이동 시간 계산 근거</h3><span class="src sim">1위 경로</span></div>
-        <div class="calc">${calcHtml}</div>
-      </div>
+      <div class="bar thin" aria-hidden="true">${bar}</div>
+      <ol class="flow">${flow}</ol>
     </div>
     <div class="card">
-      <div class="card-h"><h3>AI가 알람을 움직일 수 있는 범위</h3></div>
+      <div class="card-h"><h3>경로 후보</h3>${best.live ? `<span class="src ai">카카오맵 실제 경로</span>` : `<span class="src sim">시뮬레이션</span>`}</div>
+      <p class="lead" style="margin-bottom:12px">빠른 순서예요. 평소엔 1위로 가고, 새벽에 문제가 생기면 ${ranked.length > 1 ? `2~${ranked.length}위로` : "다른 길로"} 바꿔요.${best.live ? " 신호 대기와 안전 여유는 앱이 더했어요." : ""}</p>
+      <ol class="routes">${routes}</ol>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>내일 아침 날씨</h3>${srcTag(w)}</div>
+      <div class="wx">${wxIcon(w.condition)}<div><div class="temp">${w.tmin}° / ${w.tmax}°</div><div class="desc">${w.condition} · 강수 ${w.precip}%</div></div></div>
+      ${w.note ? `<p class="note">${esc(w.note)}</p>` : ""}
+      <label class="wx-override" for="wxSel"><span>시연용으로 날씨 바꾸기</span><select id="wxSel"><option value="auto">예측대로</option><option>맑음</option><option>흐림</option><option>비</option><option>눈</option></select></label>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>AI가 알람을 옮길 수 있는 범위</h3></div>
       ${rangeHtml}
     </div>
-    <div class="card">
-      <div class="card-h"><h3>경로 후보 1~5위</h3><span class="src sim">시뮬레이션</span></div>
-      <p class="small muted" style="margin-bottom:8px">예상 소요 시간이 짧은 순이에요. 신호등, 대기, 구역 시간을 모두 넣고 계산했어요. 1위가 기본 경로, 2~5위는 새벽에 문제가 생기면 쓰는 대안이에요.</p>
-      <div class="table-wrap"><table><thead><tr><th>순위</th><th>경로</th><th class="num">소요</th><th class="num">거리</th><th class="num">신호등</th><th class="num">횡단보도</th><th>지나는 구역</th><th>대중교통</th></tr></thead><tbody>${rows}</tbody></table></div>
-    </div>`;
+    <details class="card fold">
+      <summary><span class="fold-t"><h3>이동 시간 계산 근거</h3><span class="fold-s">1위 경로 · 이동 + 버퍼 <b class="num">${best.total + SAFETY}분</b></span></span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="calc">${calcHtml}</div>
+    </details>`;
+  const lb = $("#liveBtn"); if (lb) lb.onclick = () => { LIVE.geo = {}; refreshLive(); };
   $("#wxSel").value = S.wxOverride;
   $("#wxSel").addEventListener("change", (e) => { S.wxOverride = e.target.value; buildPlan(); renderAll(); });
 }
 
 /* ---------- 2. 밤 브리핑 ---------- */
-function briefingText() {
-  const { inp, w, best, t } = S.plan; const rec = recommendSound();
-  const parts = [`내일 아침은 ${w.condition}, 기온 ${w.tmin}~${w.tmax}도로 예상돼요.`,
-    `${best.name}(으)로 가면 이동에 ${best.total}분이 걸려서 ${fmt(t.depart)}에 출발하면 돼요.`,
-    t.short ? `지금 계획대로면 최소 수면에서 ${fmtDur(t.short)}가 모자라요. ${fmt(t.minBed)} 전에는 꼭 누워 주세요.` : `알람은 ${fmt(t.latest)}이고, ${fmt(t.recBed)}에 자면 ${RECOMMENDED_SLEEP}시간을 잘 수 있어요.`];
-  if (w.condition === "비" || w.condition === "눈") parts.push("우산을 현관에 미리 꺼내 두세요.");
-  parts.push(`알람음은 '${soundName(rec.id)}'을(를) 추천해요.`);
-  return parts.join(" ");
+function briefingLines() {
+  const { w, best, t } = S.plan; const rec = recommendSound();
+  const lines = [["날씨", `내일 아침은 ${w.condition}, 기온 ${w.tmin}~${w.tmax}도예요.`],
+    ["출발", `${best.name}(으)로 ${best.total}분 걸려요. ${fmt(t.depart)}에 출발하면 돼요.`],
+    ["수면", t.short ? `최소 수면에서 ${fmtDur(t.short)}가 모자라요. ${fmt(t.minBed)} 전에는 꼭 누워 주세요.` : `알람은 ${fmt(t.latest)}이에요. ${fmt(t.recBed)}에 자면 ${RECOMMENDED_SLEEP}시간 잘 수 있어요.`]];
+  if (w.condition === "비" || w.condition === "눈") lines.push(["준비물", "우산을 현관에 미리 꺼내 두세요."]);
+  lines.push(["알람음", `'${soundName(rec.id)}'을(를) 추천해요.`]);
+  return lines;
+}
+function briefingText() { return briefingLines().map((l) => l[1]).join(" "); }
+// 줄 목록 → 보기 좋은 목록. 열쇠 말이 없는 줄(AI 문장)은 점으로 표시
+function briefListHtml(lines) {
+  return `<ul class="brief">${lines.map((l) => Array.isArray(l) ? `<li><span class="bk">${l[0]}</span><span>${esc(l[1])}</span></li>` : `<li class="nokey"><span>${esc(l)}</span></li>`).join("")}</ul>`;
+}
+function splitSentences(text) {
+  return String(text).split(/\n+/).flatMap((p) => p.split(/(?<=[.!?。])\s+/)).map((x) => x.trim()).filter(Boolean);
 }
 function renderNight() {
   const { inp, w, best, t } = S.plan; const rec = recommendSound();
   const okSound = !!inp.sound, once = inp.days.length === 0;
   const today = (new Date().getDay() + 6) % 7, tmrw = (today + 1) % 7;
   const tmrwOn = once || inp.days.includes(tmrw);
+  const okCount = [okSound, inp.vibrate, tmrwOn, true].filter(Boolean).length;
   $("#tab-night").innerHTML = `
     <h2 class="page-title">밤 브리핑</h2>
     ${pickerHtml()}
@@ -1102,28 +1400,26 @@ function renderNight() {
       <strong>내일 알람 ${fmt(t.latest)} · ${w.condition} ${w.tmin}°/${w.tmax}°</strong>
       <p>${t.short ? `최소 수면이 ${fmtDur(t.short)} 모자라요. 지금 바로 준비하세요.` : `${fmt(t.recBed)}에 자면 ${RECOMMENDED_SLEEP}시간 잘 수 있어요.`}</p>
     </div>
-    <p class="small muted">권장 취침 ${fmt(t.recBed)}의 1시간 전인 <b class="num">${fmt(t.brief)}</b>에 이 알림이 와요.</p>
-    <div class="grid2">
-      <div class="card">
-        <div class="card-h"><h3>오늘 밤 브리핑</h3>${S.sample ? `<span class="src ai">AI 문장 가능</span>` : `<span class="src">템플릿</span>`}</div>
-        <div class="ai-text" id="briefText">${esc(briefingText())}</div>
-        <div class="btn-row" style="margin-top:10px">${S.sample ? `<button class="btn small" id="aiBriefBtn" type="button">AI 브리핑 받기</button>` : `<span class="small muted">AI가 연결되면 AI가 브리핑 문장을 써요.</span>`}<span class="small muted" id="briefNote"></span></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>상황별 추천 알람음</h3>${rec.source === "ai" ? `<span class="src ai">AI 추천</span>` : `<span class="src">규칙 추천</span>`}</div>
-        <p style="font-weight:700;font-size:1.1rem">${soundName(rec.id)}</p>
-        <p class="small muted" style="margin:4px 0 10px">${esc(rec.why)}</p>
-        <div class="btn-row"><button class="btn small" type="button" id="recPlay">미리 듣기</button>${inp.sound === rec.id ? `<span class="small" style="color:var(--go);font-weight:700">이미 이 소리로 설정됨</span>` : `<button class="btn small primary" type="button" id="recSet">이 소리로 설정</button>`}</div>
+    <p class="hint">밤 <b class="num">${fmt(t.brief)}</b>에 이 알림이 와요 (권장 취침 1시간 전)</p>
+    <div class="card">
+      <div class="card-h"><h3>오늘 밤 브리핑</h3>${S.sample ? `<span class="src ai">AI 문장 가능</span>` : `<span class="src">템플릿</span>`}</div>
+      <div class="brief-box" id="briefText">${briefListHtml(briefingLines())}</div>
+      <div class="btn-row" style="margin-top:14px">${S.sample ? `<button class="btn small" id="aiBriefBtn" type="button">AI 브리핑 받기</button>` : ""}<span class="small muted" id="briefNote"></span></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>자기 전에 확인하기</h3><span class="count">${okCount}/4 확인</span></div>
+      <div class="checklist">
+        <div class="ck"><span class="mark ${okSound ? "ok" : "no"}">${okSound ? "✓" : "!"}</span><span class="grow"><span class="ck-k">알람음</span><span class="ck-v" style="display:block">${soundName(inp.sound)} · 볼륨 ${inp.volume}%</span></span><button class="btn small" type="button" data-focus="sound">바꾸기</button></div>
+        <div class="ck"><span class="mark ${inp.vibrate ? "ok" : "no"}">${inp.vibrate ? "✓" : "!"}</span><span class="grow"><span class="ck-k">진동</span><span class="ck-v" style="display:block">${inp.vibrate ? "켜짐" : "꺼짐"}</span></span><button class="btn small" type="button" id="vibToggle">${inp.vibrate ? "끄기" : "켜기"}</button></div>
+        <div class="ck"><span class="mark ${tmrwOn ? "ok" : "no"}">${tmrwOn ? "✓" : "!"}</span><span class="grow"><span class="ck-k">요일 반복</span><span class="ck-v" style="display:block">${once ? "없음 (다음 한 번만)" : inp.days.map((d) => DAYS[d]).join(" ")}${!tmrwOn ? ` <span class="warn">· 내일(${DAYS[tmrw]}) 꺼짐</span>` : ""}</span></span><button class="btn small" type="button" data-focus="d0">고치기</button></div>
+        <div class="ck"><span class="mark ok">✓</span><span class="grow"><span class="ck-k">덤 수면 · 미션</span><span class="ck-v" style="display:block">${inp.bonus ? "켜짐" : "꺼짐"} · ${missionText(inp)}</span></span></div>
       </div>
     </div>
     <div class="card">
-      <div class="card-h"><h3>자기 전에 확인할 설정</h3></div>
-      <div class="checklist">
-        <div class="ck"><span class="mark ${okSound ? "ok" : "no"}">${okSound ? "✓" : "!"}</span><span class="grow">알람음: ${soundName(inp.sound)} · 볼륨 ${inp.volume}%</span><button class="btn small" type="button" data-focus="sound">바꾸기</button></div>
-        <div class="ck"><span class="mark ${inp.vibrate ? "ok" : "no"}">${inp.vibrate ? "✓" : "!"}</span><span class="grow">휴대폰 진동: <b>${inp.vibrate ? "켜짐" : "꺼짐"}</b></span><button class="btn small" type="button" id="vibToggle">${inp.vibrate ? "끄기" : "켜기"}</button></div>
-        <div class="ck"><span class="mark ${tmrwOn ? "ok" : "no"}">${tmrwOn ? "✓" : "!"}</span><span class="grow">요일 반복: ${once ? "없음 (다음 한 번만 울려요)" : inp.days.map((d) => DAYS[d]).join(" ")}${!tmrwOn ? ` <span style="color:var(--wait);font-weight:700">· 내일(${DAYS[tmrw]})은 꺼져 있어요</span>` : ""}</span><button class="btn small" type="button" data-focus="d0">고치기</button></div>
-        <div class="ck"><span class="mark ok">✓</span><span class="grow">덤 수면 ${inp.bonus ? "켜짐" : "꺼짐"} · 스마트 웨이크업 ${inp.smart ? "켜짐" : "꺼짐"} · 미션 ${missionText(inp)}</span></div>
-      </div>
+      <div class="card-h"><h3>추천 알람음</h3>${rec.source === "ai" ? `<span class="src ai">AI 추천</span>` : `<span class="src">규칙 추천</span>`}</div>
+      <p class="sound-name">${soundName(rec.id)}</p>
+      <p class="sound-why">${esc(rec.why)}</p>
+      <div class="btn-row"><button class="btn small" type="button" id="recPlay">미리 듣기</button>${inp.sound === rec.id ? `<span class="small" style="color:var(--go);font-weight:700">이미 이 소리로 설정됨</span>` : `<button class="btn small primary" type="button" id="recSet">이 소리로 설정</button>`}</div>
     </div>`;
   $("#recPlay").onclick = () => preview(rec.id, inp.volume);
   const set = $("#recSet"); if (set) set.onclick = () => { patchAlarm(S.selId, { sound: rec.id }, true); toast(`알람음을 '${soundName(rec.id)}'(으)로 바꿨어요.`); };
@@ -1165,23 +1461,30 @@ function renderDawn() {
   $("#tab-dawn").innerHTML = `
     <h2 class="page-title">새벽 점검</h2>
     ${pickerHtml()}
+    <p class="lead">자는 동안 앱이 경로를 다시 확인하고, 문제가 생기면 알람을 옮겨요.</p>
     <div class="card">
-      <div class="card-h"><h3>새벽에 무슨 일이 생겼을까요?</h3><span class="src sim">시연용 상황</span></div>
-      <p class="small muted" style="margin-bottom:10px">상황을 고르고 점검을 돌려 보세요. 알람 설정 시각(${fmt(t.bed)})과 알람(${fmt(t.latest)})의 중간인 <span class="num">${fmt(pts[0].t)}</span>에 한 번, 알람 120분 전부터 30분 전까지 10분마다 경로를 확인해요.</p>
-      <div class="events">${EVENTS.map((e) => `<button type="button" class="chip ${e.good ? "good" : ""}" data-ev="${e.id}" aria-pressed="${d.events.has(e.id)}">${e.label}<span class="muted small"> · ${e.desc}</span></button>`).join("")}</div>
-      <div class="btn-row" style="margin-top:12px"><button class="btn primary" type="button" id="dawnRun" ${d.running ? "disabled" : ""}>새벽 점검 돌려보기</button><button class="btn ghost small" type="button" id="dawnReset">초기화</button><span class="small muted">덤 수면 ${inp.bonus ? "켜짐" : "꺼짐"}</span></div>
+      <div class="card-h"><h3><span class="stepn">1</span>새벽 상황 고르기</h3><span class="src sim">시연용</span></div>
+      <div class="events">${EVENTS.map((e) => `<button type="button" class="ev ${e.good ? "good" : ""}" data-ev="${e.id}" aria-pressed="${d.events.has(e.id)}"><b>${e.label}</b><span>${e.desc}</span></button>`).join("")}</div>
     </div>
-    <div class="grid2">
-      <div class="card chart">
-        <div class="card-h"><h3>경로 교통량 기록</h3><span class="src sim">시뮬레이션</span></div>
-        <div id="dawnChart">${d.records.length ? chartSvg(d.records) : `<p class="empty">점검을 돌리면 평소 교통량(점선)과 오늘 교통량(실선)이 그려져요.</p>`}</div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>점검 기록</h3><span class="small muted">${d.records.length}/${pts.length}회</span></div>
-        <div class="log" id="dawnLog">${d.records.map(logRow).join("") || `<p class="empty">아직 기록이 없어요.</p>`}</div>
-      </div>
+    <div class="card">
+      <div class="card-h"><h3><span class="stepn">2</span>점검 돌리기</h3><span class="count">${d.records.length}/${pts.length}회</span></div>
+      <ul class="when">
+        <li>취침과 알람 사이 <b>${fmt(pts[0].t)}</b>에 한 번</li>
+        <li>알람 120분 전 ~ 30분 전, 10분마다</li>
+        <li>덤 수면 ${inp.bonus ? "켜짐 · 길이 빨라지면 더 재워 줘요" : "꺼짐"}</li>
+      </ul>
+      <div class="btn-row"><button class="btn primary wide" type="button" id="dawnRun" ${d.running ? "disabled" : ""}>${d.running ? "점검하는 중…" : "새벽 점검 돌려보기"}</button><button class="btn" type="button" id="dawnReset">초기화</button></div>
     </div>
-    <div id="dawnDecision">${d.result ? decisionHtml(d.result) : ""}</div>`;
+    <div id="dawnDecision">${d.result ? decisionHtml(d.result) : ""}</div>
+    <div class="card chart">
+      <div class="card-h"><h3>경로 교통량</h3><span class="src sim">시뮬레이션</span></div>
+      <div id="dawnChart">${d.records.length ? chartSvg(d.records) : `<p class="empty">점검을 돌리면 평소 교통량과 오늘 교통량을 비교해서 그려요.</p>`}</div>
+      <div class="chart-legend"><span><i></i>평소</span><span><i class="solid"></i>오늘 (빨강 = 평소보다 막힘)</span><span>평소 아침 최고 = 100</span></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>점검 기록</h3></div>
+      <div class="log" id="dawnLog">${d.records.map(logRow).join("") || `<p class="empty">아직 기록이 없어요.</p>`}</div>
+    </div>`;
   document.querySelectorAll("#tab-dawn [data-ev]").forEach((b) => b.onclick = () => {
     if (d.running) return; const id = b.dataset.ev;
     d.events.has(id) ? d.events.delete(id) : d.events.add(id);
@@ -1191,10 +1494,10 @@ function renderDawn() {
   $("#dawnReset").onclick = () => { if (d.running) return; d.events.clear(); d.result = null; d.records = []; S.finalAlarm = S.plan.t.latest; S.finalNote = "계획 그대로"; renderDawn(); renderHome(); };
 }
 function logRow(r) {
-  return `<div><span class="t">${fmt(r.t)}</span><span>${r.label} · 교통량 <b class="num">${r.v}</b> (평소 ${r.b})${r.msg ? ` · <span class="${r.good ? "good" : "warn"}">${esc(r.msg)}</span>` : ""}</span></div>`;
+  return `<div class="lrow"><span class="t">${fmt(r.t)}</span><div><b>${r.label}</b> · 교통량 <b class="num">${r.v}</b> <span class="muted">(평소 ${r.b})</span>${r.msg ? `<div class="msg ${r.good ? "good" : "warn"}">${esc(r.msg)}</div>` : ""}</div></div>`;
 }
 function chartSvg(recs) {
-  const W = 600, H = 210, L = 34, R = 26, T = 14, B = 34;
+  const W = 340, H = 180, L = 28, R = 10, T = 10, B = 26;
   const all = dawnCheckpoints(); const n = all.length;
   const x = (i) => L + (W - L - R) * (n === 1 ? 0 : i / (n - 1));
   const y = (v) => T + (H - T - B) * (1 - v / 140);
@@ -1204,12 +1507,13 @@ function chartSvg(recs) {
   const worse = recs.some((r) => r.v > r.b * 1.15);
   const col = worse ? "var(--stop)" : "var(--go)";
   const last = recs[recs.length - 1];
-  const xl = all.map((p, i) => (i === 0 || i === n - 1 || (i % 3 === 0 && i < n - 2)) ? `<text x="${x(i)}" y="${H - 12}" text-anchor="${i === 0 ? "start" : i === n - 1 ? "end" : "middle"}">${fmt(p.t)}</text>` : "").join("");
+  const mid = Math.floor((n - 1) / 2);
+  const xl = all.map((p, i) => (i === 0 || i === n - 1 || i === mid) ? `<text x="${x(i)}" y="${H - 6}" text-anchor="${i === 0 ? "start" : i === n - 1 ? "end" : "middle"}">${fmt(p.t)}</text>` : "").join("");
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="교통량 기록 그래프">
     ${grid}<polyline points="${base}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 5"/>
     <polyline points="${today}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>
     ${recs.map((r) => `<circle cx="${x(r.i)}" cy="${y(r.v)}" r="${r === last ? 5 : 3}" fill="${col}"/>`).join("")}
-    ${xl}<text x="${L}" y="${T - 2}">교통량 지수 (평소 아침 최고 = 100)</text></svg>`;
+    ${xl}</svg>`;
 }
 function runDawn() {
   const d = S.dawn; if (d.running) return;
@@ -1239,6 +1543,7 @@ function runDawn() {
     d.records.push({ i, t: p.t, label: p.label, v, b, msg, good });
     const log = $("#dawnLog"); if (log) { log.innerHTML = d.records.map(logRow).join(""); log.scrollTop = log.scrollHeight; }
     const ch = $("#dawnChart"); if (ch) ch.innerHTML = chartSvg(d.records);
+    const cnt = $("#tab-dawn .count"); if (cnt) cnt.textContent = `${d.records.length}/${pts.length}회`;
     i++;
     if (i < pts.length) setTimeout(step, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220);
     else { d.running = false; decide(); }
@@ -1269,24 +1574,24 @@ function decide() {
 }
 function decisionHtml(res) {
   const { t } = S.plan;
-  const head = res.type === "b" ? "플랜 B 발동" : res.type === "bonus" ? "덤 수면" : res.type === "earlier" ? "알람 앞당김" : "변화 없음";
-  const blocked = res.blockedList.length ? `<div class="alert stop"><span class="badge">통행 불가</span><span>${res.blockedList.map(esc).join(", ")} 구간을 지날 수 없어요. 그 길을 쓰는 경로는 빼고 다시 골랐어요.</span></div>` : "";
+  const head = res.type === "b" ? "결과: 플랜 B 발동" : res.type === "bonus" ? "결과: 덤 수면" : res.type === "earlier" ? "결과: 알람 앞당김" : "결과: 변화 없음";
+  const blocked = res.blockedList.length ? `<div class="alert stop"><span class="badge">통행 불가</span><div class="alert-txt"><p>${res.blockedList.map(esc).join(", ")}</p><p class="alert-sub">이 길을 쓰는 경로는 빼고 다시 골랐어요.</p></div></div>` : "";
   let alt = "";
   if (res.type === "b" || res.blockedList.length) {
-    const rows = res.ranked.map((r) => `<tr class="${r === res.nb ? "best" : ""} ${r.blocked ? "blocked" : ""}"><td>${esc(r.name)}</td><td class="num">${r.blocked ? "-" : r.total + "분"}</td><td class="num">${r.blocked ? "-" : fmt(computeTimes(r, S.plan.inp, S.plan.w).latest)}</td><td class="reason">${r.blocked ? esc(r.blocked) : r === res.nb ? "추천" : ""}</td></tr>`).join("");
+    const rows = res.ranked.map((r) => `<li class="${r === res.nb ? "best" : ""} ${r.blocked ? "blocked" : ""}"><span><span class="an">${esc(r.name)}</span><span class="why">${r.blocked ? esc(r.blocked) : r === res.nb ? "추천" : ""}</span></span><span class="av">${r.blocked ? "-" : r.total + "분"}${r.blocked ? "" : `<small>알람 ${fmt(computeTimes(r, S.plan.inp, S.plan.w).latest)}</small>`}</span></li>`).join("");
     const taxiAlarm = computeTimes({ ...res.nb, total: res.taxi.total, walk: 0, sigMin: 0, wait: 0, fv: 0, first: null }, S.plan.inp, S.plan.w).latest;
-    alt = `<div class="table-wrap" style="margin-top:10px"><table style="min-width:440px"><thead><tr><th>대안</th><th class="num">소요</th><th class="num">이 경로면 알람</th><th></th></tr></thead><tbody>${rows}
-      <tr><td>택시 (호출 대기 5분 포함)<div class="small muted">예상 ${res.taxi.fare.toLocaleString()}원 · 시뮬레이션</div></td><td class="num">${res.taxi.total}분</td><td class="num">${fmt(taxiAlarm)}</td><td class="reason"></td></tr></tbody></table></div>`;
+    alt = `<p class="ck-k" style="margin-top:14px">다른 방법</p><ul class="alts">${rows}
+      <li><span><span class="an">택시</span><span class="why">호출 대기 5분 포함 · 예상 ${res.taxi.fare.toLocaleString()}원</span></span><span class="av">${res.taxi.total}분<small>알람 ${fmt(taxiAlarm)}</small></span></li></ul>`;
   }
   return `<div class="card decision ${res.type}">
-    <div class="card-h"><h3>${head}</h3><span class="num" style="font-weight:600;font-size:1.3rem">${fmt(res.alarm)}</span></div>
-    <div class="stack">${blocked}<p>${esc(res.note)}</p>${res.sleepWarn ? `<div class="alert wait"><span class="badge">수면</span><span>${esc(res.sleepWarn)}</span></div>` : ""}${res.firstFail ? `<div class="alert stop"><span class="badge">첫차</span><span>바뀐 경로로는 첫차 전에 출발해야 해요. 택시나 자가용을 고려하세요.</span></div>` : ""}</div>
+    <div class="card-h"><h3><span class="stepn">3</span>${head}</h3></div>
+    <div class="dec-time"><span class="k">내일 알람</span><span class="big">${fmt(res.alarm)}</span>${res.alarm !== t.latest ? `<span class="was num">${fmt(t.latest)}</span>` : ""}</div>
+    <div class="stack"><p class="dec-note">${esc(res.note)}</p>${blocked}${res.sleepWarn ? `<div class="alert wait"><span class="badge">수면</span><div class="alert-txt"><p>${esc(res.sleepWarn)}</p></div></div>` : ""}${res.firstFail ? `<div class="alert stop"><span class="badge">첫차</span><div class="alert-txt"><p>바뀐 경로로는 첫차 전에 출발해야 해요.</p><p class="alert-sub">택시나 자가용을 고려하세요.</p></div></div>` : ""}</div>
     ${alt}
-    <div class="btn-row" style="margin-top:12px"><button class="btn primary small" type="button" data-go="home">이 알람으로 기상 시연하기</button></div></div>`;
+    <div class="btn-row" style="margin-top:14px"><button class="btn primary" type="button" data-go="home">이 알람으로 기상 시연하기</button></div></div>`;
 }
 
 /* ---------- 4. 기상 ---------- */
-let sim = null;
 const ICON = {
   plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 4.5v15M4.5 12h15"/></svg>`,
   more: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="18.5" r="1.7"/></svg>`,
@@ -1333,7 +1638,6 @@ function rowHtml(a) {
         <div class="opt vol"><span class="k">볼륨</span><input type="range" min="0" max="100" step="5" value="${i.volume}" data-opt="volume" aria-label="${esc(a.name)} 볼륨"><span class="v num" data-volout>${i.volume}%</span></div>
         ${sw("vibrate", "진동")}
         ${sw("bonus", "덤 수면", TIP_BONUS)}
-        ${sw("smart", "스마트 웨이크업", TIP_SMART)}
         ${opt("기상 미션", missionText(i))}
         ${opt("반복", i.days.length ? i.days.map((d) => DAYS[d]).join(" ") : "없음 (한 번만)")}
       </div>
@@ -1359,13 +1663,14 @@ function renderHome() {
       <button class="tool-btn" type="button" id="moreBtn" aria-label="더 보기" title="더 보기" aria-haspopup="menu" aria-expanded="false">${ICON.more}</button>
       <div class="menu" id="moreMenu" role="menu" hidden>
         <button type="button" role="menuitem" data-menu="edit">편집</button>
+        <button type="button" role="menuitem" data-menu="install">앱으로 설치</button>
         <button type="button" role="menuitem" data-menu="reset">예시 알람으로 되돌리기</button>
       </div>
     </div>
     <div class="summary"><button class="ic ${on ? "" : "alloff"}" type="button" id="allToggle" aria-pressed="${on > 0}" aria-label="모든 알람 ${on ? "끄기" : "켜기"}" title="모든 알람 ${on ? "끄기" : "켜기"}">${ICON.alarm}</button><span>내 알람</span><span class="cnt" title="켜진 알람">${ICON.alarm}<b id="cntOn">${on}</b></span><span class="cnt dim" title="꺼진 알람">${ICON.alarmOff}<b id="cntOff">${S.alarms.length - on}</b></span></div>`}
     <div class="alarm-list" id="alarmList">${S.alarms.map(rowHtml).join("")}</div>
     <p class="small muted list-hint">${ed ? "왼쪽 원을 눌러 고르고 아래에서 삭제하거나 켜고 끌 수 있어요. 오른쪽 줄 세 개를 끌면 순서가 바뀌어요." : "알람을 누르면 설정이 펼쳐지고 바로 바꿀 수 있어요. 주황 점이 붙은 알람이 계획·밤 브리핑·새벽 점검·출발 화면의 기준이에요."}</p>
-    <div class="card sleep-sim" id="simBox"></div>
+    <div class="card live-box" id="simBox"></div>
     <div class="card">
       <div class="card-h"><h3>기상 기록</h3><span class="small muted">이 기기에만 저장돼요</span></div>
       <div class="wake-log">${S.wakeLog.length ? S.wakeLog.slice(-7).reverse().map((l) => `<div><span>${esc(l.date)}</span><span>알람 <b class="num">${l.alarm}</b> → 기상 <b class="num">${l.woke}</b> · ${esc(l.how)}</span></div>`).join("") : `<p class="empty">미션을 끝내면 실제 기상 시각이 여기에 쌓여요.</p>`}</div>
@@ -1380,7 +1685,7 @@ function paintEditBar() {
   const all = $("#pickAll"); if (all) { const f = n === S.alarms.length; all.classList.toggle("picked", f); all.setAttribute("aria-pressed", String(f)); }
 }
 function setEditMode(on) {
-  S.editMode = on; S.editSel.clear(); if (on) { S.openId = null; stopSleepSim(); }
+  S.editMode = on; S.editSel.clear(); if (on) S.openId = null;
   renderHome();
   if (!on) { const m = $("#moreBtn"); if (m) m.focus({ preventScroll: true }); } else $("#editExit").focus({ preventScroll: true });
 }
@@ -1426,20 +1731,28 @@ function updateHero() {
 }
 function renderSimBox() {
   const box = $("#simBox"); if (!box || !S.plan) return;
-  stopSleepSim();
-  const al = selAlarm(); const inp = S.plan.inp; const a = S.finalAlarm ?? S.plan.t.latest; const on = al.on;
+  const al = selAlarm(); const a = alarmMinFor(al); const f = fmt12(a);
   box.innerHTML = `
-    <div class="card-h"><h3>${inp.smart ? "스마트 웨이크업 시연" : "정시 알람 시연"}</h3><span class="src">${esc(al.name)} · ${fmt(a)}</span></div>
-    <p class="small muted">${inp.smart ? `알람 20분 전(${fmt(a - 20)})부터 얕은 잠이 감지되면 그때 깨워요. 얕은 잠이 안 오면 ${fmt(a)}에 울려요.` : `스마트 웨이크업이 꺼져 있어서 ${fmt(a)}에 정확히 울려요.`} ${esc(S.finalNote)}</p>
-    <div class="stage" id="stageBar" aria-hidden="true"></div>
-    <div class="btn-row"><span class="num" id="simClock" style="font-weight:600">--:--</span><span class="small muted" id="simStage">${on ? "대기 중" : "알람을 켜야 시연할 수 있어요"}</span></div>
+    <div class="card-h"><h3>실제 알람</h3><span class="src">${esc(al.name)} · ${f.ampm} ${f.t}</span></div>
+    <p class="web-note">웹 버전은 이 화면을 켜 둔 동안에만 울려요. 휴대폰을 충전기에 꽂고 '알람 기다리기'를 켜 두세요.</p>
+    <div class="arm-status" id="armStatus" aria-live="polite"><span class="dot"></span><span id="armText"></span></div>
     <div class="btn-row">
-      <button class="btn primary" type="button" id="sleepStart" ${on ? "" : "disabled"}>잠들기</button>
-      ${inp.smart ? `<button class="btn" type="button" id="forceLight" disabled>얕은 잠 만들기</button>` : ""}
-      <button class="btn" type="button" id="ringNow" ${on ? "" : "disabled"}>지금 울리기</button>
+      <button class="btn primary" type="button" id="armBtn"></button>
+      <button class="btn" type="button" id="demo1m" ${al.on ? "" : "disabled"}>1분 뒤 울리기</button>
+      <button class="btn" type="button" id="ringNow" ${al.on ? "" : "disabled"}>지금 울리기</button>
+    </div>
+    <div class="handoff">
+      <p class="small muted">화면이 꺼져도 확실히 울리게 하려면, 계산한 시각을 휴대폰 기본 앱에 넘겨 두세요.</p>
+      <div class="btn-row">
+        <a class="btn small" id="toClock" href="${esc(clockIntent(al, a))}">시계 앱에 알람 등록</a>
+        <a class="btn small" id="toCal" href="${esc(calUrl(al, a))}" target="_blank" rel="noopener">구글 캘린더에 등록</a>
+      </div>
+      <p class="small muted">시계 앱 등록은 안드로이드 크롬에서만 되고, 안 되는 기기에서는 구글 캘린더가 대신 열려요. 캘린더 알림은 '일정 시작 시'로 맞춰 두세요.</p>
     </div>`;
-  $("#sleepStart").onclick = () => startSleepSim(a);
-  $("#ringNow").onclick = () => { stopSleepSim(); openRing(a, "바로 울림"); };
+  $("#armBtn").onclick = () => setArmed(!live.armed);
+  $("#demo1m").onclick = () => { ctx(); live.demo = { id: al.id, at: Date.now() + 60000 }; if (live.armed) lockScreen(true); paintArm(); toast("1분 뒤에 이 알람이 실제로 울려요. 화면을 켜 두세요."); };
+  $("#ringNow").onclick = () => openRing(a, "바로 울림");
+  paintArm();
 }
 function toggleRow(id) {
   const opening = S.openId !== id; S.openId = opening ? id : null;
@@ -1453,8 +1766,9 @@ function toggleRow(id) {
 function selectAlarm(id) {
   S.selId = id; store.set("selId", id);
   S.inp = selAlarm().inp; S.dawn.events.clear(); S.departChecks = {};
-  stopSleepSim(); buildPlan();
+  buildPlan();
   renderPlan(); renderNight(); renderDawn(); renderDepart(); renderSimBox();
+  if (LIVE_CAN()) refreshLive();
   document.querySelectorAll("#alarmList .arow").forEach((r) => r.classList.toggle("sel", r.dataset.id === id));
 }
 function patchAlarm(id, patch, rerenderHome = false) {
@@ -1483,34 +1797,12 @@ function toggleMenu() {
 function closeMenu() { const m = $("#moreMenu"); if (m && !m.hidden) { m.hidden = true; $("#moreBtn").setAttribute("aria-expanded", "false"); } }
 function menuAction(k) {
   if (k === "edit") { closeMenu(); setEditMode(true); return; }
+  if (k === "install") { closeMenu(); installApp(); return; }
   if (k === "reset") {
     S.alarms = SEED(); saveAlarms(); S.openId = null;
     S.selId = "a1"; store.set("selId", "a1"); S.inp = selAlarm().inp; S.dawn.events.clear(); S.departChecks = {};
     buildPlan(); renderAll(); toast("예시 알람 3개로 되돌렸어요.");
   }
-}
-function stopSleepSim() { if (sim) { clearInterval(sim.timer); sim = null; } }
-function startSleepSim(alarm) {
-  stopSleepSim(); ctx();
-  const inp = S.plan.inp; const r = rng(hash("sleep" + alarm + Date.now()));
-  sim = { t: alarm - 25, alarm, stages: [], force: false };
-  const bar = $("#stageBar"); bar.innerHTML = "";
-  const fl = $("#forceLight"); if (fl) { fl.disabled = false; fl.onclick = () => { sim && (sim.force = true); }; }
-  $("#sleepStart").disabled = true;
-  sim.timer = setInterval(() => {
-    if (!sim) return;
-    const inWin = sim.t >= sim.alarm - 20;
-    let light = r() < .18 || sim.force; if (sim.force) sim.force = false;
-    sim.stages.push(light ? "light" : "deep");
-    bar.insertAdjacentHTML("beforeend", `<i class="${light ? "light" : "deep"} ${inWin ? "win" : ""}"></i>`);
-    $("#simClock").textContent = fmt(sim.t);
-    $("#simStage").textContent = (light ? "얕은 잠" : "깊은 잠") + (inWin ? " · 깨우기 구간" : "");
-    if ((inp.smart && inWin && light) || sim.t >= sim.alarm) {
-      const at = sim.t; const how = inp.smart && at < sim.alarm ? `얕은 잠 감지 (${sim.alarm - at}분 일찍)` : "정시 알람";
-      stopSleepSim(); openRing(at, how); return;
-    }
-    sim.t += 1;
-  }, 260);
 }
 let ringState = null;
 /* ---------- 기상 미션 ---------- */
@@ -1688,18 +1980,22 @@ function renderDepart() {
   $("#tab-depart").innerHTML = `
     <h2 class="page-title">출발</h2>
     ${pickerHtml()}
-    <div class="card">
-      <div class="card-h"><h3>출발 마감</h3><span class="small muted">${esc(S.finalNote)}</span></div>
-      <p class="big-time" style="margin:0">${fmt(dl)}</p>
-      <p class="small muted">출발 3분 전(<span class="num">${fmt(dl - 3)}</span>)에 준비물 알림이 와요. 아래 버튼으로 언제든 현관 체크를 열 수 있어요.</p>
-      <div class="btn-row" style="margin-top:10px"><button class="btn primary" type="button" id="play3">출발 3분 전 알림 재생</button><button class="btn" type="button" id="openDoor">현관 체크 열기</button></div>
+    <div class="card depart-card">
+      <p class="k">이 시각까지 집에서 나가야 해요</p>
+      <p class="big-time">${fmt(dl)}</p>
+      <span class="pill">${esc(S.finalNote)}</span>
+      <div class="info-row"><span>출발 3분 전 준비물 알림<small>이 화면을 켜 두면 실제로 와요</small></span><b class="num">${fmt(dl - 3)}</b></div>
+      <div class="btn-col"><button class="btn primary" type="button" id="play3">3분 전 알림 미리 보기</button><button class="btn" type="button" id="openDoor">현관 체크 열기</button></div>
     </div>
     <div class="card">
-      <div class="card-h"><h3>오늘 챙길 것</h3><span class="small muted">${done}/${items.length}</span></div>
-      <div class="checklist">${items.map((it) => `<div class="ck"><span class="mark ${S.departChecks[it.name] ? "ok" : "no"}">${S.departChecks[it.name] ? "✓" : "·"}</span><span class="grow">${esc(it.name)}</span><span class="small muted">${esc(it.why)}</span></div>`).join("")}</div>
+      <div class="card-h"><h3>오늘 챙길 것</h3><span class="count num">${done}/${items.length}</span></div>
+      <div class="progress big" aria-hidden="true"><i style="width:${items.length ? done / items.length * 100 : 0}%"></i></div>
+      <div class="checklist">${items.map((it, i) => `<button type="button" class="ck tap ${S.departChecks[it.name] ? "done" : ""}" data-item="${i}" aria-pressed="${!!S.departChecks[it.name]}"><span class="mark ${S.departChecks[it.name] ? "ok" : "no"}">${S.departChecks[it.name] ? "✓" : "·"}</span><span class="grow"><span class="ck-v" style="display:block">${esc(it.name)}</span><span class="ck-k">${esc(it.why)}</span></span></button>`).join("")}</div>
+      <p class="hint" style="margin-top:8px;padding:0">누르면 챙김 표시가 돼요.</p>
     </div>`;
   $("#play3").onclick = () => { toast(`${fmt(dl - 3)} · 3분 뒤 출발해야 해요. 준비물을 확인하세요.`); setTimeout(openSheet, 900); };
   $("#openDoor").onclick = openSheet;
+  document.querySelectorAll("#tab-depart [data-item]").forEach((b) => b.onclick = () => { const n = items[+b.dataset.item].name; S.departChecks[n] = !S.departChecks[n]; renderDepart(); });
 }
 function openSheet() {
   if (!S.plan) return;
@@ -1810,18 +2106,200 @@ function setWheel(v, smooth = false) {
 }
 function openEdit(id = null) {
   S.editId = id; const a = id ? byId(id) : null; const cur = selAlarm().inp;
-  writeInputs(a ? a.inp : { ...DEFAULTS, origin: cur.origin, dest: "", walk: 20, arrive: "09:00", days: [], memo: "" });
+  writeInputs(a ? a.inp : { ...DEFAULTS, origin: cur.origin, dest: "", walk: "", arrive: "09:00", days: [], memo: "" });
   $("#aname").value = a ? a.name : ""; $("#aname").placeholder = `알람 ${S.alarms.length + 1}`;
   $("#editTitle").textContent = a ? "알람 편집" : "새 알람";
   $("#planBtn").textContent = a ? "저장하고 계획 다시 세우기" : "알람 추가하고 계획 세우기";
   $("#delBtn").hidden = !a; resetDel(); updatePreview(); closeMenu();
   showSheet($("#editWrap")); document.body.style.overflow = "hidden";
   const sh = $("#editWrap .sheet"); sh.scrollTop = 0; sh.focus({ preventScroll: true });
-  requestAnimationFrame(() => setWheel(+$("#count").value));
+  requestAnimationFrame(() => { setWheel(+$("#count").value); syncDials(); });
 }
 function closeEdit() { hideSheet($("#editWrap"), () => { document.body.style.overflow = ""; }); }
 function cancelEdit() { stopSound(); tripSeq++; closeEdit(); }
 function closeSheet() { hideSheet($("#sheetWrap")); $("#fab").focus({ preventScroll: true }); }
+
+/* ---------- 시간 다이얼 (오전/오후 · 시 · 분) ---------- */
+// 시·분 줄은 같은 숫자를 여러 번 이어 붙여 두고, 멈출 때마다 가운데 묶음으로 몰래 옮겨서 끝없이 도는 것처럼 보이게 함
+const DIAL_H = 44, H_REP = 9, M_REP = 5, H_MID = 4, M_MID = 2;
+const dials = {};
+function buildDial(box) {
+  const key = box.dataset.for;
+  const hours = [], mins = [];
+  for (let r = 0; r < H_REP; r++) for (let h = 1; h <= 12; h++) hours.push(h);
+  for (let r = 0; r < M_REP; r++) for (let m = 0; m < 60; m++) mins.push(String(m).padStart(2, "0"));
+  const col = (part, items, label) => `<div class="tcol ${part}" data-part="${part}" tabindex="0" role="spinbutton" aria-label="${label}"><div class="tpad"></div>${items.map((t, i) => `<div class="titem" data-i="${i}">${t}</div>`).join("")}<div class="tpad"></div></div>`;
+  box.innerHTML = col("ap", ["오전", "오후"], "오전 오후") + col("h", hours, "시") + `<span class="tsep" aria-hidden="true">:</span>` + col("m", mins, "분");
+  const d = { key, ap: 0, k: { ap: 0, h: H_MID * 12 + 11, m: M_MID * 60 }, half: 0, cols: {} };
+  box.querySelectorAll(".tcol").forEach((c) => { d.cols[c.dataset.part] = c; wireCol(d, c); });
+  dials[key] = d;
+}
+const dialValue = (d) => { const h12 = d.k.h % 12 + 1, m = d.k.m % 60; const h24 = (h12 % 12) + (d.ap ? 12 : 0); return String(h24).padStart(2, "0") + ":" + String(m).padStart(2, "0"); };
+function paintDial(d) {
+  const v = dialValue(d); const [h, m] = v.split(":").map(Number); const f = fmt12(h * 60 + m);
+  for (const p of ["ap", "h", "m"]) {
+    const c = d.cols[p]; const i = p === "ap" ? d.ap : d.k[p];
+    if (c._on) c._on.classList.remove("on"); c._on = c.querySelector(`.titem[data-i="${i}"]`); if (c._on) c._on.classList.add("on");
+  }
+  d.cols.ap.setAttribute("aria-valuetext", f.ampm); d.cols.h.setAttribute("aria-valuetext", (h % 12 || 12) + "시"); d.cols.m.setAttribute("aria-valuetext", m + "분");
+}
+function scrollCol(c, i, smooth) { c.scrollTo({ top: i * DIAL_H, behavior: smooth && !reduced() ? "smooth" : "auto" }); }
+function setDial(key, hhmm) {
+  const d = dials[key]; if (!d) return;
+  const [h24, m] = String(hhmm || "07:00").split(":").map(Number);
+  d.ap = h24 >= 12 ? 1 : 0; d.k.h = H_MID * 12 + ((h24 % 12 || 12) - 1); d.k.m = M_MID * 60 + (m || 0); d.half = Math.floor((d.k.h + 1) / 12);
+  $("#" + key).value = dialValue(d); paintDial(d); syncDial(d);
+}
+function syncDial(d) { scrollCol(d.cols.ap, d.ap); scrollCol(d.cols.h, d.k.h); scrollCol(d.cols.m, d.k.m); }
+const syncDials = () => Object.values(dials).forEach(syncDial);
+// 스크롤이 멈추면 값 확정: 시가 11↔12를 넘으면 오전/오후도 바뀜 (휴대폰 시계와 같음)
+function settleCol(d, c) {
+  const p = c.dataset.part; const max = p === "ap" ? 1 : p === "h" ? 12 * H_REP - 1 : 60 * M_REP - 1;
+  const k = Math.max(0, Math.min(max, Math.round(c.scrollTop / DIAL_H)));
+  if (p === "ap") d.ap = k;
+  else if (p === "h") {
+    const half = Math.floor((k + 1) / 12);
+    if (Math.abs(half - d.half) % 2 === 1) { d.ap ^= 1; scrollCol(d.cols.ap, d.ap, true); }
+    const k2 = H_MID * 12 + (k % 12); d.k.h = k2; d.half = Math.floor((k2 + 1) / 12);
+    if (k2 !== k) c.scrollTop = k2 * DIAL_H;
+  } else {
+    const k2 = M_MID * 60 + (k % 60); d.k.m = k2;
+    if (k2 !== k) c.scrollTop = k2 * DIAL_H;
+  }
+  paintDial(d);
+  const inp = $("#" + d.key); const v = dialValue(d);
+  if (inp.value !== v) { inp.value = v; inp.dispatchEvent(new Event("input", { bubbles: true })); }
+}
+function wireCol(d, c) {
+  let t = null, raf = 0;
+  c.addEventListener("scroll", () => {
+    if (!raf) raf = requestAnimationFrame(() => {
+      raf = 0; const i = Math.round(c.scrollTop / DIAL_H);
+      if (c._on && +c._on.dataset.i !== i) c._on.classList.remove("on");
+      c._on = c.querySelector(`.titem[data-i="${i}"]`); if (c._on) c._on.classList.add("on");
+    });
+    clearTimeout(t); t = setTimeout(() => { if (!c.classList.contains("dragging")) settleCol(d, c); }, 110);
+  }, { passive: true });
+  // 마우스는 끌어서 돌리기 (손가락은 기본 스크롤로 돌아감)
+  c.addEventListener("pointerdown", (e) => {
+    c._moved = false; if (e.pointerType !== "mouse" || e.button !== 0) return;
+    const y0 = e.clientY, top0 = c.scrollTop; c.classList.add("dragging"); c.setPointerCapture(e.pointerId);
+    const move = (ev) => { const dy = ev.clientY - y0; if (Math.abs(dy) > 4) c._moved = true; c.scrollTop = top0 - dy; };
+    const up = () => { c.removeEventListener("pointermove", move); c.removeEventListener("pointerup", up); c.removeEventListener("pointercancel", up); c.classList.remove("dragging"); scrollCol(c, Math.round(c.scrollTop / DIAL_H), true); setTimeout(() => settleCol(d, c), reduced() ? 0 : 320); };
+    c.addEventListener("pointermove", move); c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
+  });
+  c.addEventListener("click", (e) => { const it = e.target.closest(".titem"); if (it && !c._moved) scrollCol(c, +it.dataset.i, true); });
+  c.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault();
+    scrollCol(c, Math.round(c.scrollTop / DIAL_H) + (e.key === "ArrowUp" ? -1 : 1), true);
+  });
+}
+
+/* ---------- 저장 전 검사: 목적지까지 걸리는 시간 ---------- */
+function clearWalkErr() { $("#walkBox").classList.remove("invalid"); $("#walkErr").hidden = true; }
+function showWalkErr() {
+  $("#walkBox").classList.add("invalid"); $("#walkErr").hidden = false;
+  $("#walkBox").scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" });
+  setTimeout(() => $("#walk").focus({ preventScroll: true }), reduced() ? 0 : 420);
+}
+
+/* ---------- 실제 시각에 울리기 (이 화면이 켜져 있는 동안) ---------- */
+const live = { armed: store.get("armed", false), lock: null, sched: null, demo: null, departKey: "" };
+async function lockScreen(on) {
+  try {
+    if (on && !live.lock && "wakeLock" in navigator && document.visibilityState === "visible") {
+      live.lock = await navigator.wakeLock.request("screen");
+      live.lock.addEventListener("release", () => { live.lock = null; paintArm(); });
+    } else if (!on && live.lock) { const l = live.lock; live.lock = null; await l.release(); }
+  } catch { live.lock = null; }
+  paintArm();
+}
+function setArmed(on) {
+  live.armed = on; store.set("armed", on);
+  if (on) ctx();
+  lockScreen(on);
+  const u = upcoming();
+  toast(on ? (u ? `알람 기다리기를 켰어요. ${u.a.name} 알람이 ${untilFor(u.at)} 울려요.` : "알람 기다리기를 켰어요. 켜진 알람이 없어요.") : "알람 기다리기를 껐어요.");
+}
+function paintArm() {
+  const st = $("#armStatus"), tx = $("#armText"), b = $("#armBtn"); if (!st) return;
+  const u = upcoming();
+  let msg;
+  if (live.demo) msg = `시연 알람까지 ${Math.max(0, Math.ceil((live.demo.at - Date.now()) / 1000))}초`;
+  else if (!u) msg = "켜진 알람이 없어요";
+  else { const f = fmt12(u.at.getHours() * 60 + u.at.getMinutes()); msg = `${u.a.name} · ${f.ampm} ${f.t}에 울려요`; }
+  if (live.armed) msg += live.lock ? " · 화면 꺼짐 방지 켜짐" : " · 화면 꺼짐 방지를 못 켰어요 (화면 자동 꺼짐 시간을 늘려 주세요)";
+  else msg += " · 화면이 꺼지면 멈출 수 있어요";
+  st.classList.toggle("on", live.armed || !!live.demo); tx.textContent = msg;
+  b.textContent = live.armed ? "알람 기다리기 끄기" : "알람 기다리기 켜기"; b.setAttribute("aria-pressed", String(live.armed));
+}
+function fireAlarm(id, how) {
+  const a = byId(id); if (!a || ringState) return;
+  if (!$("#editWrap").hidden) closeEdit();
+  if (id !== S.selId) selectAlarm(id);
+  const n = new Date(); openRing(n.getHours() * 60 + n.getMinutes(), how);
+}
+function departAlert() {
+  const dl = departDeadline();
+  if (AC && AC.state === "running") { startSound("beep", S.plan.inp.volume); setTimeout(stopSound, 2400); }
+  try { if (S.plan.inp.vibrate && navigator.vibrate) navigator.vibrate([300, 150, 300]); } catch {}
+  toast(`${fmt(dl - 3)} · 3분 뒤 출발해야 해요. 준비물을 확인하세요.`);
+  selectTab("depart"); setTimeout(openSheet, 600);
+}
+function liveTick() {
+  const now = new Date();
+  if (!ringState) {
+    if (live.demo && now.getTime() >= live.demo.at) { const d = live.demo; live.demo = null; fireAlarm(d.id, "시연 알람 (1분 뒤)"); }
+    else if (live.sched && now >= live.sched.at) {
+      const s = live.sched; live.sched = null;
+      if (now - s.at < 15 * 60000) fireAlarm(s.id, "정시 알람");
+    }
+  }
+  const u = upcoming(); live.sched = u ? { id: u.a.id, at: u.at } : null;
+  // 기준 알람(주황 점)의 출발 3분 전 알림
+  if (S.plan && !ringState) {
+    const al = selAlarm(); const wd = (now.getDay() + 6) % 7;
+    if (al.on && (!al.inp.days.length || al.inp.days.includes(wd))) {
+      const dm = ((Math.round(departDeadline() - 3) % 1440) + 1440) % 1440; const key = now.toDateString() + dm;
+      if (now.getHours() * 60 + now.getMinutes() === dm && live.departKey !== key) { live.departKey = key; departAlert(); }
+    }
+  }
+  if (live.demo || curTab === "home") paintArm();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { if (live.armed) lockScreen(true); liveTick(); } });
+
+/* ---------- 계산한 시각을 휴대폰 기본 앱으로 넘기기 ---------- */
+const pad2 = (n) => String(n).padStart(2, "0");
+function calUrl(al, a) {
+  const m = ((Math.round(a) % 1440) + 1440) % 1440;
+  const day = nextRing(al) || tomorrow(); const st = new Date(day); st.setHours(Math.floor(m / 60), m % 60, 0, 0);
+  const en = new Date(st.getTime() + 10 * 60000);
+  const stamp = (d) => `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}T${pad2(d.getHours())}${pad2(d.getMinutes())}00`;
+  const BY = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+  const q = new URLSearchParams({ action: "TEMPLATE", text: `⏰ 기상 · ${al.name}`, dates: `${stamp(st)}/${stamp(en)}`, ctz: "Asia/Seoul",
+    details: `AI 기상·출근 매니저가 계산한 알람 시각이에요. ${al.inp.dest} ${al.inp.arrive} 도착 기준.` });
+  if (al.inp.days.length) q.set("recur", `RRULE:FREQ=WEEKLY;BYDAY=${al.inp.days.map((i) => BY[i]).join(",")}`);
+  return "https://calendar.google.com/calendar/render?" + q.toString();
+}
+function clockIntent(al, a) {
+  const m = ((Math.round(a) % 1440) + 1440) % 1440;
+  return `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${Math.floor(m / 60)};i.android.intent.extra.alarm.MINUTES=${m % 60};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(al.name)};S.browser_fallback_url=${encodeURIComponent(calUrl(al, a))};end`;
+}
+
+/* ---------- 앱처럼 설치 (GitHub Pages 주소에서만) ---------- */
+let installEvt = null;
+const ON_PAGES = /\.github\.io$/.test(location.hostname);
+if (ON_PAGES) {
+  const l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
+  const ic = document.createElement("link"); ic.rel = "apple-touch-icon"; ic.href = "icon-192.png"; document.head.appendChild(ic);
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; });
+async function installApp() {
+  if (matchMedia("(display-mode: standalone)").matches) { toast("이미 앱으로 열려 있어요."); return; }
+  if (installEvt) { const e = installEvt; installEvt = null; try { await e.prompt(); const r = await e.userChoice; toast(r.outcome === "accepted" ? "홈 화면에 앱을 설치했어요." : "설치를 취소했어요."); } catch { toast("크롬 ⋮ 메뉴에서 '홈 화면에 추가'를 눌러 주세요."); } return; }
+  toast(ON_PAGES ? "크롬 ⋮ 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 눌러 주세요." : "doin4171.github.io 주소에서 열면 앱처럼 설치할 수 있어요.");
+}
 
 /* ---------- AI 연결 (claude.use("sample")) ---------- */
 function setAi(state, text) {
@@ -1865,13 +2343,14 @@ JSON 하나만 답해. 형식:
 async function aiBriefing() {
   if (!S.sample) return;
   const { inp, w, best, t } = S.plan; const btn = $("#aiBriefBtn"); const out = $("#briefText"); const note = $("#briefNote");
-  btn.disabled = true; out.textContent = "AI가 브리핑을 쓰는 중…"; note.textContent = "";
+  btn.disabled = true; out.classList.add("streaming"); out.textContent = "AI가 브리핑을 쓰는 중…"; note.textContent = ""; let last = "";
   const data = { 날씨: `${w.condition} ${w.tmin}~${w.tmax}도 강수 ${w.precip}%`, 경로: best.name, 이동시간: best.total + "분", 출발마감: fmt(t.depart), 알람: fmt(t.latest), 권장취침: fmt(t.recBed), 최소수면부족: t.short ? fmtDur(t.short) : "없음", 첫차문제: t.firstFail ? "있음" : "없음", 챙길것: departItems().map((i) => i.name).join(", "), 추천알람음: soundName(recommendSound().id) };
   try {
-    await S.sample(`너는 고등학생과 직장인이 쓰는 '기상·출근 매니저' 앱의 밤 브리핑 담당이야. 아래 숫자만 사용하고 새 숫자를 지어내지 마. 다정하지만 짧게, 한국어 존댓말 3~4문장으로 오늘 밤 할 일과 내일 아침 계획을 알려 줘. 마크다운 없이 평문으로.\n\n${JSON.stringify(data, null, 1)}`, { modelTier: "quick", onText: ({ text }) => { out.textContent = text; } });
+    await S.sample(`너는 고등학생과 직장인이 쓰는 '기상·출근 매니저' 앱의 밤 브리핑 담당이야. 아래 숫자만 사용하고 새 숫자를 지어내지 마. 다정하지만 짧게, 한국어 존댓말 3~4문장으로(한 문장에 한 가지 내용) 오늘 밤 할 일과 내일 아침 계획을 알려 줘. 마크다운 없이 평문으로.\n\n${JSON.stringify(data, null, 1)}`, { modelTier: "quick", onText: ({ text }) => { last = text; out.textContent = text; } });
+    out.classList.remove("streaming"); out.innerHTML = briefListHtml(splitSentences(last));
     note.textContent = "AI가 쓴 문장이에요.";
   } catch (e) {
-    out.textContent = (e && e.text) || briefingText();
+    out.classList.remove("streaming"); out.innerHTML = briefListHtml(e && e.text ? splitSentences(e.text) : briefingLines());
     note.textContent = e && e.code === "not_granted" ? "AI 사용이 허용되지 않아 템플릿 문장을 보여줘요." : "AI 브리핑을 못 받아서 템플릿 문장을 보여줘요.";
   } finally { btn.disabled = false; }
 }
@@ -1928,7 +2407,7 @@ function setTheme(next, x, y) {
   const cs = getComputedStyle(document.body); document.body.style.backgroundColor = cs.backgroundColor; document.body.style.backgroundImage = cs.backgroundImage;
   // 2) 화면에 보이는 덩어리마다 원이 닿는 시각을 계산해서 색 바뀌는 시작 시각(--td)으로 넣음
   const marked = [];
-  const sel = `.top, .nav-inner, .fab, .editbar, #tab-${curTab} > *, #tab-${curTab} .arow, #tab-${curTab} .card > *, #tab-${curTab} .opt, #tab-${curTab} .stat, #tab-${curTab} .alert`;
+  const sel = `.top, .nav-inner, .fab, .editbar, #tab-${curTab} > *, #tab-${curTab} .arow, #tab-${curTab} .card > *, #tab-${curTab} .opt, #tab-${curTab} .stat, #tab-${curTab} .alert, #tab-${curTab} .flow > li, #tab-${curTab} .route, #tab-${curTab} .ck, #tab-${curTab} .lrow`;
   document.querySelectorAll(sel).forEach((el) => {
     const r = el.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight || !r.width) return;
     // 큰 카드는 가운데, 작은 줄은 가까운 쪽 가장자리를 기준으로 원이 닿는 시각을 잼
@@ -1957,7 +2436,7 @@ function initTheme() {
 }
 
 /* ---------- 시작 ---------- */
-buildInputs(); buildWheel();
+buildInputs(); buildWheel(); document.querySelectorAll(".tdial").forEach(buildDial);
 S.alarms = loadAlarms(); saveAlarms();
 S.inp = S.alarms[0].inp;
 S.weather = ruleWeather(S.inp.origin);
@@ -1965,6 +2444,7 @@ if (!byId(S.selId)) S.selId = (upcoming() || { a: S.alarms[0] }).a.id;
 S.inp = selAlarm().inp;
 buildPlan(); renderAll();
 initTheme();
+if (LIVE_CAN()) refreshLive();
 selectTab(TABS.includes(store.get("tab", "home")) ? store.get("tab", "home") : "home", { anim: false });
 
 TABS.forEach((t) => $("#t-" + t).addEventListener("click", () => selectTab(t)));
@@ -1993,7 +2473,7 @@ home.addEventListener("click", (e) => {
     const id = act.closest(".arow").dataset.id; const a = byId(id);
     if (act.dataset.act === "edit") openEdit(id);
     else if (act.dataset.act === "plan") { if (id !== S.selId) selectAlarm(id); selectTab("plan"); }
-    else if (act.dataset.act === "ring") { if (id !== S.selId) selectAlarm(id); stopSleepSim(); openRing(alarmMinFor(a), "바로 울림"); }
+    else if (act.dataset.act === "ring") { if (id !== S.selId) selectAlarm(id); openRing(alarmMinFor(a), "바로 울림"); }
     return;
   }
   if (e.target.closest("#moreBtn")) return toggleMenu();
@@ -2029,6 +2509,7 @@ $("#memoIn").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.is
 $("#memoList").addEventListener("click", (e) => { const b = e.target.closest("[data-memo-del]"); if (!b) return; memoItems.splice(+b.dataset.memoDel, 1); renderMemo(); $("#memoIn").focus(); });
 $("#planForm").addEventListener("input", (e) => {
   const id = e.target.id; const nm = e.target.name;
+  if (id === "walk" || id === "walkAi") clearWalkErr();
   if (id === "level") paintLevel();
   if (nm === "mission") paintExample();
   if (id === "walkAi") { paintAiFill(); if (e.target.checked) estimateTrip(); else { tripSeq++; $("#walkNote").textContent = ""; } }
@@ -2042,7 +2523,13 @@ $("#countWheel").addEventListener("scroll", () => { clearTimeout(wheelT); wheelT
 $("#countWheel").addEventListener("click", (e) => { const it = e.target.closest(".wheel-item"); if (it) setWheel(+it.dataset.n, true); });
 $("#countWheel").addEventListener("keydown", (e) => { if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); setWheel(+$("#count").value + (e.key === "ArrowUp" ? -1 : 1), true); } });
 $("#planForm").addEventListener("submit", (e) => {
-  e.preventDefault(); stopSound(); tripSeq++;
+  e.preventDefault();
+  // 걸리는 시간이 비어 있으면 저장하지 않고 그 칸으로 올라감 (AI 체크면 규칙 추정으로 채움)
+  if ($("#walk").value.trim() === "") {
+    if (!$("#walkAi").checked) { showWalkErr(); return; }
+    $("#walk").value = ruleTrip(readInputs()).min;
+  }
+  stopSound(); tripSeq++;
   const inp = readInputs(); const name = $("#aname").value.trim() || $("#aname").placeholder;
   let a = S.editId ? byId(S.editId) : null;
   if (a) { a.inp = inp; a.name = name; }
@@ -2051,12 +2538,12 @@ $("#planForm").addEventListener("submit", (e) => {
   const prevOrigin = S.inp.origin;
   S.selId = a.id; store.set("selId", a.id); S.inp = a.inp; S.openId = a.id;
   if (S.inp.origin !== prevOrigin || !S.weather || S.weather.source !== "ai") S.weather = ruleWeather(S.inp.origin);
-  S.dawn.events.clear(); S.departChecks = {}; stopSleepSim();
+  S.dawn.events.clear(); S.departChecks = {};
   buildPlan(); renderAll(); closeEdit(); selectTab("home");
   const row = document.querySelector(`.arow[data-id="${a.id}"]`);
   if (row) { row.classList.add("flash"); setTimeout(() => row.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }), 120); }
   const at = nextRing(a); toast(`${a.name} 알람${at ? `이 ${untilFor(at)} 울려요` : "을 저장했어요"}.`);
-  aiWeather();
+  if (LIVE_CAN()) refreshLive(); else aiWeather();
 });
 $("#delBtn").onclick = () => {
   if (S.alarms.length <= 1) { toast("알람이 하나는 있어야 계획을 보여줄 수 있어요."); return; }
@@ -2071,6 +2558,8 @@ document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if
 $("#editCancel").onclick = cancelEdit;
 $("#editWrap").addEventListener("click", (e) => { if (e.target.id === "editWrap") cancelEdit(); });
 setInterval(updateHero, 30000);
+setInterval(liveTick, 1000); liveTick();
+if (live.armed) lockScreen(true);
 connectAi();
 })();
 </script>
