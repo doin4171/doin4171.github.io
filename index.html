@@ -1,0 +1,2077 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>AI 기상·출근 매니저</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@200;300;400;500;700&display=swap">
+<style>
+/* Layout: 휴대폰 시계앱 문법. 위쪽은 그라데이션 위에 '몇 시간 후 울림' 큰 글씨, 아래는 둥근 카드 하나에 알람 목록(누르면 펼쳐짐), 떠 있는 알약 모양 탭 바, 편집은 아래에서 올라오는 시트. 넓은 화면에서도 앱 폭(560px)으로 가운데 정렬 */
+:root {
+  --bg: #0B0C10;
+  --bg-grad: radial-gradient(90% 42% at 88% 36%, rgba(96, 30, 140, .40), transparent 70%), radial-gradient(70% 40% at 0% 72%, rgba(18, 64, 84, .28), transparent 70%), linear-gradient(180deg, #1E1F2A 0%, #13141A 42%, #0B0C10 100%);
+  --surface: #1B1B1E;
+  --surface-2: #2A2A2F;
+  --line: #303036;
+  --off: #707076;
+  --pill: rgba(255, 255, 255, .07);
+  --nav-sel: rgba(255, 255, 255, .13);
+  --nav-line: rgba(255, 255, 255, .06);
+  --fg: #F3F3F5;
+  --muted: #8F9098;
+  --accent: #FF8A3D;
+  --accent-soft: #3A2414;
+  --go: #3BCB82;
+  --go-soft: #13331F;
+  --wait: #F2AC3E;
+  --wait-soft: #3A2C12;
+  --stop: #FF5E52;
+  --stop-soft: #3F1B18;
+  --prep: #8E9DF5;
+  --prep-soft: #22264A;
+  --on-accent: #160A02;
+  --nav: rgba(38, 38, 42, .86);
+  --shadow: 0 8px 28px rgba(0, 0, 0, .45);
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 18px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F2F2F6; --surface: #FFFFFF; --surface-2: #E8E8EE; --line: #DCDCE3;
+    --fg: #111114; --muted: #6B6C74; --accent: #E2691A; --accent-soft: #FCE7D8;
+    --go: #1C9C5A; --go-soft: #DBF2E4; --wait: #AE6800; --wait-soft: #FBEBD0;
+    --stop: #D0362B; --stop-soft: #F9DFDC; --prep: #4A5BC2; --prep-soft: #E2E5F8;
+    --on-accent: #FFFFFF; --nav: rgba(255, 255, 255, .9); --shadow: 0 8px 24px rgba(20, 20, 30, .12);
+    --bg-grad: radial-gradient(90% 42% at 88% 36%, rgba(190, 150, 255, .34), transparent 70%), radial-gradient(70% 40% at 0% 72%, rgba(120, 200, 230, .22), transparent 70%), linear-gradient(180deg, #E4E5F0 0%, #EEEFF5 42%, #F2F2F6 100%);
+    --off: #A3A4AB; --pill: rgba(0, 0, 0, .05); --nav-sel: rgba(0, 0, 0, .08); --nav-line: rgba(0, 0, 0, .06);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F2F2F6; --surface: #FFFFFF; --surface-2: #E8E8EE; --line: #DCDCE3;
+  --fg: #111114; --muted: #6B6C74; --accent: #E2691A; --accent-soft: #FCE7D8;
+  --go: #1C9C5A; --go-soft: #DBF2E4; --wait: #AE6800; --wait-soft: #FBEBD0;
+  --stop: #D0362B; --stop-soft: #F9DFDC; --prep: #4A5BC2; --prep-soft: #E2E5F8;
+  --on-accent: #FFFFFF; --nav: rgba(255, 255, 255, .9); --shadow: 0 8px 24px rgba(20, 20, 30, .12);
+  --bg-grad: radial-gradient(90% 42% at 88% 36%, rgba(190, 150, 255, .34), transparent 70%), radial-gradient(70% 40% at 0% 72%, rgba(120, 200, 230, .22), transparent 70%), linear-gradient(180deg, #E4E5F0 0%, #EEEFF5 42%, #F2F2F6 100%);
+  --off: #A3A4AB; --pill: rgba(0, 0, 0, .05); --nav-sel: rgba(0, 0, 0, .08); --nav-line: rgba(0, 0, 0, .06);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--bg); }
+body {
+  margin: 0; min-height: 100vh;
+  background-color: var(--bg); background-image: var(--bg-grad); background-repeat: no-repeat; background-attachment: fixed;
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(env(safe-area-inset-bottom, 0px) + 170px);
+}
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; line-height: 1.25; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.thin { font-family: var(--font-body); font-weight: 200; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+
+/* 상단 */
+.top { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 8px; padding-block: 14px 4px; }
+.top .app-name { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.top .spacer { flex: 1; }
+.tool-btn { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 0; background: transparent; color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: background .2s; }
+.tool-btn svg { width: 24px; height: 24px; }
+.tool-btn:hover { background: var(--pill); }
+.theme-btn.spin svg { animation: spinIn .55s cubic-bezier(.3, 1.3, .5, 1); }
+.icon-btn { border: 0; background: transparent; color: var(--accent); font-weight: 500; font-size: .95rem; cursor: pointer; padding: 6px 4px; }
+.page-title { font-size: 2rem; font-weight: 700; letter-spacing: -.01em; margin: 4px 0 2px; }
+.page-sub { color: var(--muted); font-size: .88rem; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 0; background: var(--surface-2); border-radius: 999px;
+  padding: 10px 16px; cursor: pointer; font-weight: 500; font-size: .9rem;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.primary { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.btn.danger { background: var(--stop); color: var(--on-accent); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.small { padding: 6px 12px; font-size: .82rem; }
+
+/* 본문 */
+.app { max-width: 560px; margin: 0 auto; display: grid; gap: 14px; overflow-x: clip; }
+.results { min-width: 0; display: grid; gap: 14px; }
+.tabpanel { display: grid; gap: 14px; min-width: 0; }
+
+/* 아래 탭 바: 떠 있는 알약 + 선택 표시가 미끄러져 이동 */
+/* 좁은 화면: 탭 바 오른쪽에 + 버튼 자리를 비워 둬서 알람 목록 스위치를 가리지 않게 */
+.nav { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); z-index: 45; display: flex; justify-content: center; padding: 0 calc(max(16px, env(safe-area-inset-right, 0px)) + 68px) 0 max(16px, env(safe-area-inset-left, 0px)); pointer-events: none; }
+.nav-inner {
+  pointer-events: auto; position: relative; width: min(100%, 440px);
+  display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px; border-radius: 999px;
+  background: var(--nav); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--nav-line); box-shadow: var(--shadow);
+}
+.nav-ind { position: absolute; top: 6px; bottom: 6px; left: 6px; width: calc((100% - 12px) / 5); border-radius: 999px; background: var(--nav-sel); transform: translateX(calc(var(--i, 0) * 100%)); transition: transform .42s cubic-bezier(.34, 1.3, .5, 1); }
+.tab { position: relative; z-index: 1; border: 0; background: transparent; display: grid; justify-items: center; gap: 1px; padding: 7px 0 6px; cursor: pointer; color: var(--muted); font-size: .66rem; font-weight: 500; border-radius: 999px; transition: color .25s; }
+.tab svg { width: 22px; height: 22px; transition: transform .3s cubic-bezier(.34, 1.4, .5, 1); }
+.tab[aria-selected="true"] { color: var(--fg); }
+.tab[aria-selected="true"] svg { transform: scale(1.1); }
+
+/* 편집 시트 (입력) */
+.sheet-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .55); display: grid; align-items: end; justify-items: center; }
+.sheet {
+  outline: none;
+  width: 100%; max-width: 560px; background: var(--bg); border-radius: 22px 22px 0 0;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 18px) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 12px; max-height: 92vh; overflow: auto; border: 1px solid var(--line); border-bottom: 0;
+}
+.sheet-h { position: sticky; top: 0; z-index: 2; background: var(--bg); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 14px 0 8px; }
+.sheet-h h3 { font-size: 1rem; text-align: center; }
+.sheet-h .icon-btn:last-child { justify-self: end; font-weight: 700; }
+.sheet-h .icon-btn:first-child { justify-self: start; }
+.grabber { width: 38px; height: 5px; border-radius: 999px; background: var(--line); margin: 8px auto 0; }
+#planForm { display: grid; gap: 14px; }
+fieldset { border: 0; margin: 0; padding: 4px 14px 12px; display: grid; gap: 10px; min-width: 0; background: var(--surface); border-radius: 14px; }
+legend { float: left; width: 100%; font-size: .74rem; font-weight: 500; color: var(--muted); padding: 10px 0 2px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > label, .lbl { font-size: .84rem; font-weight: 500; color: var(--muted); }
+.hint { font-size: .74rem; color: var(--muted); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+input[type="text"], input[type="number"], input[type="time"], select, textarea {
+  width: 100%; min-width: 0; background: var(--surface-2); border: 1px solid transparent; border-radius: 10px;
+  padding: 9px 11px; font-size: .95rem;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+textarea { resize: vertical; min-height: 70px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.unit { position: relative; }
+.unit input { padding-right: 46px; }
+.unit span { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); font-size: .8rem; color: var(--muted); pointer-events: none; }
+.check { display: flex; align-items: center; gap: 8px; font-size: .88rem; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: .92rem; padding: 4px 0; }
+.switch input { appearance: none; margin: 0; width: 50px; height: 28px; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 2px var(--off); border: 0; position: relative; cursor: pointer; flex: none; transition: background .25s, box-shadow .25s; }
+.switch input::after { content: ""; position: absolute; top: 5px; left: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--off); transition: transform .3s cubic-bezier(.34, 1.4, .5, 1), background .25s; }
+.switch input:checked { background: var(--accent); box-shadow: none; }
+.switch input:checked::after { background: #FFFFFF; transform: translateX(22px); }
+.switch .two { display: grid; }
+.days { display: flex; gap: 6px; flex-wrap: wrap; }
+.days label { cursor: pointer; }
+.days input { position: absolute; opacity: 0; pointer-events: none; }
+.days span { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); font-size: .85rem; color: var(--muted); }
+.days input:checked + span { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.days input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sound-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.plan-btn { width: 100%; padding: 14px; font-size: 1rem; }
+.ai-status { font-size: .78rem; color: var(--muted); display: flex; gap: 6px; align-items: center; justify-content: center; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.on { background: var(--go); }
+.dot.busy { background: var(--wait); animation: pulse 1s infinite; }
+
+/* 알람 홈 (갤럭시 시계 다크 화면 느낌) */
+.hero-home { min-height: clamp(170px, 28vh, 290px); display: grid; place-content: center; text-align: center; gap: 8px; padding: 10px 4px 4px; }
+.hero-home h2 { font-size: clamp(1.45rem, 6.2vw, 2.05rem); font-weight: 700; letter-spacing: -.02em; }
+.hero-home p { color: var(--muted); font-size: .95rem; font-weight: 500; }
+.toolbar { display: flex; justify-content: flex-end; gap: 2px; position: relative; margin-bottom: -4px; }
+.toolbar .tool-btn svg { width: 28px; height: 28px; }
+.menu { position: absolute; right: 0; top: 48px; z-index: 30; min-width: 210px; background: var(--surface-2); border-radius: 16px; padding: 6px; box-shadow: var(--shadow); display: grid; transform-origin: top right; animation: pop .18s ease both; }
+.menu button { border: 0; background: transparent; text-align: left; padding: 11px 12px; border-radius: 10px; font-size: .92rem; cursor: pointer; }
+.menu button:hover, .menu button:focus-visible { background: var(--pill); }
+.summary { display: flex; align-items: center; justify-content: center; gap: 16px; background: var(--pill); border-radius: 999px; padding: 10px 18px; font-size: .98rem; font-weight: 500; }
+.summary .ic { width: 42px; height: 42px; border-radius: 50%; background: var(--fg); color: var(--bg); display: grid; place-items: center; flex: none; }
+.summary .ic svg { width: 24px; height: 24px; }
+.summary .cnt { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.summary .cnt b { font-weight: 500; }
+.summary .cnt svg { width: 20px; height: 20px; }
+.summary .cnt.dim { color: var(--off); }
+.alarm-list { background: var(--surface); border-radius: 28px; padding: 8px 0; overflow: hidden; }
+.arow { transition: background .3s; }
+.arow.open { background: color-mix(in srgb, var(--fg) 4%, transparent); }
+.arow + .arow .arow-top { border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+.arow-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 14px 20px 14px 24px; }
+.arow-main { border: 0; background: transparent; color: var(--fg); text-align: left; cursor: pointer; padding: 0; display: grid; gap: 3px; min-width: 0; }
+.alarm-time { display: flex; align-items: baseline; gap: 6px; }
+.alarm-time .ampm { font-size: 1.05rem; font-weight: 500; }
+.alarm-time .t { font-size: clamp(2.5rem, 11vw, 3rem); font-weight: 500; line-height: 1.05; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.arow-sub { font-size: .9rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.pin-dot { display: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 7px; vertical-align: 2px; }
+.arow.sel .pin-dot { display: inline-block; }
+.arow.off .alarm-time, .arow.off .arow-sub { color: var(--off); }
+.arow-main .chev { display: inline-block; margin-left: 6px; transition: transform .3s; color: var(--off); }
+.arow.open .chev { transform: rotate(180deg); }
+.arow-more { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .34s cubic-bezier(.2, .8, .2, 1); }
+.arow.open .arow-more { grid-template-rows: 1fr; }
+.arow-more-in { overflow: hidden; min-height: 0; }
+.arow-more-pad { padding: 0 18px 18px 22px; display: grid; gap: 12px; opacity: 0; transform: translateY(-8px); transition: opacity .2s, transform .3s; }
+.arow.open .arow-more-pad { opacity: 1; transform: none; transition-delay: .06s; }
+.opts { background: var(--surface-2); border-radius: 18px; padding: 2px 14px; display: grid; }
+.opt { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: .9rem; min-height: 46px; }
+.opt:last-child { border-bottom: 0; }
+.opt .k { color: var(--muted); flex: none; }
+.opt .v { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.opt .two { display: grid; text-align: left; }
+.opt.vol { display: grid; grid-template-columns: auto minmax(0, 1fr) 3.2em; }
+.list-hint { text-align: center; padding: 0 10px; }
+.arow.flash .arow-top { animation: flash 1.6s ease; }
+.picker { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.picker::-webkit-scrollbar { display: none; }
+.pick { flex: none; border: 0; border-radius: 999px; padding: 8px 13px; background: var(--surface); color: var(--muted); font-size: .82rem; font-weight: 500; cursor: pointer; transition: background .25s, color .25s; }
+.pick[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.pick.off { opacity: .6; }
+.edit-preview { text-align: center; display: grid; justify-items: center; gap: 2px; padding: 2px 0 6px; }
+.edit-preview .k { font-size: .78rem; color: var(--muted); }
+.btn.del { background: transparent; color: var(--stop); }
+
+.card { background: var(--surface); border-radius: var(--r); padding: 16px; min-width: 0; }
+.card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.card-h h3 { font-size: 1rem; }
+.src { font-size: .7rem; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.src.ai { background: var(--go-soft); color: var(--go); }
+
+/* 계획 */
+.hero { background: var(--surface); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; }
+.hero .eyebrow { font-size: .8rem; color: var(--muted); }
+.big-time { font-family: var(--font-body); font-weight: 200; font-size: clamp(3.4rem, 15vw, 4.8rem); line-height: 1; letter-spacing: -.03em; margin: 4px 0 6px; font-variant-numeric: tabular-nums; }
+.hero .sub { font-size: .86rem; color: var(--muted); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+.stat .k { font-size: .74rem; color: var(--muted); }
+.stat .v { font-weight: 300; font-size: 1.5rem; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.stat .v small { font-size: .7rem; font-weight: 500; color: var(--muted); margin-left: 4px; }
+
+.alerts { display: grid; gap: 8px; }
+.alert { display: flex; gap: 10px; align-items: flex-start; border-radius: 14px; padding: 11px 13px; font-size: .87rem; }
+.alert .badge { flex: none; font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-top: 2px; }
+.alert.go { background: var(--go-soft); } .alert.go .badge { background: var(--go); color: var(--on-accent); }
+.alert.wait { background: var(--wait-soft); } .alert.wait .badge { background: var(--wait); color: var(--on-accent); }
+.alert.stop { background: var(--stop-soft); } .alert.stop .badge { background: var(--stop); color: var(--on-accent); }
+
+.bar { display: flex; height: 34px; border-radius: 10px; overflow: hidden; gap: 2px; }
+.seg { display: grid; place-items: center; font-size: .7rem; font-weight: 700; color: var(--on-accent); min-width: 0; overflow: hidden; white-space: nowrap; }
+.seg.prep { background: var(--prep); }
+.seg.walk { background: var(--go); }
+.seg.wait { background: color-mix(in srgb, var(--go) 55%, var(--surface)); color: var(--fg); }
+.seg.ride { background: color-mix(in srgb, var(--go) 75%, var(--bg)); color: var(--fg); }
+.seg.extra { background: color-mix(in srgb, var(--wait) 60%, var(--surface)); color: var(--fg); }
+.seg.buf { background: var(--wait); }
+.ticks { position: relative; height: 34px; margin-top: 4px; }
+.ticks span { position: absolute; transform: translateX(-50%); font-size: .7rem; color: var(--muted); text-align: center; white-space: nowrap; line-height: 1.25; }
+.ticks span b { display: block; font-family: var(--font-num); color: var(--fg); font-weight: 600; font-size: .76rem; }
+.ticks span:first-child { transform: none; text-align: left; }
+.ticks span:last-child { transform: translateX(-100%); text-align: right; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .76rem; color: var(--muted); margin-top: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+.calc { display: grid; font-size: .86rem; }
+.calc div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.calc div:last-child { border-bottom: 0; font-weight: 700; }
+.calc .num { white-space: nowrap; }
+
+.range { position: relative; height: 10px; border-radius: 999px; background: var(--surface-2); margin: 26px 0 30px; }
+.range .fill { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: var(--go); }
+.range .fill.bad { background: var(--stop); }
+.range .pin { position: absolute; top: -24px; transform: translateX(-50%); font-family: var(--font-num); font-size: .78rem; font-weight: 600; white-space: nowrap; }
+.range .pin.below { top: 16px; color: var(--muted); font-family: var(--font-body); font-weight: 500; font-size: .72rem; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .84rem; min-width: 600px; }
+th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .72rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
+td.num, th.num { text-align: right; }
+tr.best td { background: var(--go-soft); }
+tr.blocked td { color: var(--muted); text-decoration: line-through; }
+tr.blocked td.reason { text-decoration: none; color: var(--stop); font-weight: 500; }
+.rank { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); font-family: var(--font-num); font-size: .76rem; font-weight: 600; }
+tr.best .rank { background: var(--go); color: var(--on-accent); }
+.tag { display: inline-block; font-size: .68rem; padding: 1px 6px; border-radius: 6px; margin: 1px 2px 1px 0; white-space: nowrap; }
+.tag.acc { background: var(--stop-soft); color: var(--stop); }
+.tag.kid { background: var(--wait-soft); color: var(--wait); }
+.tag.spd { background: var(--prep-soft); color: var(--prep); }
+
+.wx { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.wx svg { width: 54px; height: 54px; flex: none; }
+.wx .temp { font-size: 1.8rem; font-weight: 200; font-variant-numeric: tabular-nums; }
+.wx .desc { font-size: .86rem; color: var(--muted); }
+.wx-override { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--muted); }
+.wx-override select { width: auto; padding: 6px 8px; font-size: .85rem; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+
+/* 밤 브리핑 */
+.push { border-radius: 20px; padding: 13px 15px; background: var(--surface-2); display: grid; gap: 3px; box-shadow: var(--shadow); }
+.push .app-line { font-size: .74rem; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.push strong { font-size: .98rem; }
+.push p { font-size: .88rem; }
+.checklist { display: grid; gap: 0; }
+.ck { display: flex; align-items: center; gap: 10px; font-size: .88rem; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ck:last-child { border-bottom: 0; }
+.ck .mark { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: .72rem; font-weight: 700; flex: none; }
+.ck .mark.ok { background: var(--go); color: var(--on-accent); }
+.ck .mark.no { background: var(--wait); color: var(--on-accent); }
+.ck .grow { flex: 1; min-width: 0; }
+.ai-text { font-size: .92rem; white-space: pre-wrap; background: var(--surface-2); padding: 12px; border-radius: 12px; min-height: 48px; }
+
+/* 새벽 점검 */
+.events { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 7px 12px; font-size: .84rem; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--stop-soft); border-color: var(--stop); color: var(--stop); font-weight: 700; }
+.chip.good[aria-pressed="true"] { background: var(--go-soft); border-color: var(--go); color: var(--go); }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-family: var(--font-body); font-size: 11px; }
+.log { display: grid; gap: 2px; font-size: .82rem; max-height: 260px; overflow: auto; }
+.log div { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.log .t { font-family: var(--font-num); font-weight: 600; flex: none; }
+.log .warn { color: var(--stop); font-weight: 500; }
+.log .good { color: var(--go); font-weight: 500; }
+.decision { box-shadow: inset 4px 0 0 var(--go); }
+.decision.b { box-shadow: inset 4px 0 0 var(--stop); }
+
+/* 기상 시뮬레이션 */
+.wake-log { display: grid; gap: 0; font-size: .85rem; }
+.wake-log div { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.wake-log div:last-child { border-bottom: 0; }
+.sleep-sim { display: grid; gap: 10px; }
+.stage { display: flex; height: 26px; border-radius: 8px; overflow: hidden; background: var(--surface-2); }
+.stage i { flex: 1; }
+.stage i.deep { background: var(--prep); }
+.stage i.light { background: color-mix(in srgb, var(--prep) 35%, var(--surface)); }
+.stage i.win { box-shadow: inset 0 -4px 0 var(--accent); }
+
+/* 울리는 화면 */
+.ring {
+  position: fixed; inset: 0; z-index: 60; background: #000000; color: #FFFFFF; overflow: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 28px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; place-items: start center;
+}
+.ring-inner { width: 100%; max-width: 480px; display: grid; gap: 14px; }
+.ring .clock { text-align: center; font-family: var(--font-body); font-size: clamp(4.6rem, 26vw, 7rem); font-weight: 200; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.ring .clock-sub { text-align: center; color: #A9AAB2; font-size: .9rem; }
+.ring.stage2 { background: #3A0B07; }
+.ring.stage2 .clock { color: #FF6B5F; }
+.ring .card { background: #1A1B1F; color: #FFFFFF; }
+.ring .card .muted, .ring .card .small.muted { color: #A9AAB2; }
+.ring input { background: #2A2B31; color: #FFFFFF; }
+.ring .btn { background: #2A2B31; color: #FFFFFF; }
+.ring .btn.ghost { background: transparent; color: #A9AAB2; }
+.vib { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 700; color: var(--accent); }
+.vib.on { animation: shake .25s infinite; }
+.stage-banner { border-radius: 14px; padding: 11px 13px; font-size: .9rem; font-weight: 500; }
+.stage-banner.s1 { background: #1A1B1F; }
+.stage-banner.s2 { background: #FF5E52; color: #160A02; }
+.stage-banner.s3 { background: #FFFFFF; color: #000000; }
+.mission { display: grid; gap: 10px; }
+.q { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 8px; align-items: center; font-size: 1.3rem; font-weight: 300; font-variant-numeric: tabular-nums; }
+.q input { font-size: 1.1rem; text-align: center; }
+.q .ok { color: #3BCB82; font-size: .85rem; }
+.q.wrong input { box-shadow: 0 0 0 2px #FF5E52; animation: shake .3s 1; }
+.ff { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.emergency { display: grid; gap: 8px; }
+.emergency .msg { background: #2A2B31; padding: 10px; border-radius: 10px; font-size: .88rem; user-select: all; }
+
+/* 출발 */
+.fab {
+  position: fixed; z-index: 44;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 15px);
+  width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); font-size: 2rem; font-weight: 300; line-height: 1;
+  box-shadow: var(--shadow); display: grid; place-items: center;
+}
+.fab:hover { filter: brightness(1.06); }
+.fab { transition: transform .25s cubic-bezier(.34, 1.4, .5, 1); }
+.fab:active { transform: scale(.92) rotate(90deg); }
+@media (min-width: 640px) { .fab { right: calc(50% - 280px + 4px); } .nav { padding: 0 16px; } .nav-inner { width: 420px; } }
+.door { border: 2px solid var(--fg); border-radius: 18px; padding: 14px; display: grid; gap: 10px; background: var(--surface); }
+.door-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.door-h h3 { font-size: 1.3rem; }
+.items { display: grid; gap: 6px; }
+.item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 12px; background: var(--surface-2); font-size: .95rem; cursor: pointer; }
+.item input { width: 20px; height: 20px; accent-color: var(--go); flex: none; }
+.item .why { margin-left: auto; font-size: .72rem; color: var(--muted); }
+.item:has(input:checked) { text-decoration: line-through; color: var(--muted); }
+.progress { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--go); transition: width .2s; }
+.go-banner { text-align: center; font-size: 2rem; font-weight: 700; color: var(--go); }
+
+.toast { position: fixed; z-index: 70; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 12px); width: min(520px, calc(100% - 32px)); }
+.muted { color: var(--muted); }
+.small { font-size: .8rem; }
+.stack { display: grid; gap: 10px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.empty { color: var(--muted); font-size: .88rem; padding: 12px; background: var(--surface-2); border-radius: 12px; }
+
+/* 화면 전환·시트·테마 애니메이션 */
+.tabpanel.in-r { animation: inR .36s cubic-bezier(.2, .8, .2, 1) both; }
+.tabpanel.in-l { animation: inL .36s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes inR { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes inL { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+.sheet-backdrop:not([hidden]) { animation: fadeIn .22s ease both; }
+.sheet-backdrop:not([hidden]) > .sheet { animation: sheetUp .38s cubic-bezier(.2, .9, .25, 1) both; }
+.sheet-backdrop.closing { animation: fadeOut .2s ease both; }
+.sheet-backdrop.closing > .sheet { animation: sheetDown .22s ease-in both; }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes fadeOut { to { opacity: 0; } }
+@keyframes sheetUp { from { transform: translateY(100%); } }
+@keyframes sheetDown { to { transform: translateY(100%); } }
+@keyframes pop { from { opacity: 0; transform: scale(.9); } }
+@keyframes spinIn { from { transform: rotate(-120deg) scale(.4); opacity: 0; } }
+@keyframes flash { 0%, 30% { background: var(--accent-soft); } 100% { background: transparent; } }
+.toast:not([hidden]) { animation: toastIn .3s cubic-bezier(.2, .9, .25, 1) both; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, -16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+/* 테마 전환: 화면을 캡처하지 않고, 새 배경색 원이 글자 '뒤'에서 퍼짐. 글자·카드 색은 원이 닿는 순간(--td)부터 바뀜 */
+.top, .app { position: relative; z-index: 1; }
+.theme-wave { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-color: var(--bg); background-image: var(--bg-grad); background-repeat: no-repeat; will-change: clip-path; }
+html.theming *, html.theming *::before, html.theming *::after { transition-property: background-color, color, border-color, box-shadow, fill, stroke, opacity !important; transition-duration: .36s !important; transition-timing-function: ease !important; transition-delay: var(--td, 0ms) !important; }
+
+/* 편집 모드 */
+.toolbar.editing { justify-content: space-between; align-items: center; }
+.edit-exit { border: 0; background: var(--pill); color: var(--fg); border-radius: 999px; padding: 9px 16px; font-weight: 700; font-size: .92rem; cursor: pointer; animation: pop .2s ease both; }
+.pick-all { border: 0; background: transparent; color: var(--fg); display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; font-weight: 500; cursor: pointer; padding: 8px 4px; }
+.pick-circle { width: 24px; height: 24px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 2px var(--off); transition: box-shadow .2s, background .2s, transform .2s; animation: circleIn .28s cubic-bezier(.34, 1.4, .5, 1) both; }
+.picked > .pick-circle, .arow.picked .pick-circle { background: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+.arow.edit .arow-main { display: flex; align-items: center; gap: 16px; }
+.arow-txt { display: grid; gap: 3px; min-width: 0; }
+.arow.edit.picked { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.grip { width: 44px; height: 44px; border: 0; background: transparent; color: var(--off); display: grid; place-items: center; cursor: grab; touch-action: none; border-radius: 12px; }
+.grip svg { width: 24px; height: 24px; }
+.grip:active { cursor: grabbing; }
+.arow.edit { position: relative; transition: transform .22s ease, background .25s; }
+.arow.dragging { transition: none; z-index: 3; background: var(--surface-2); box-shadow: var(--shadow); border-radius: 18px; }
+.editbar { position: fixed; z-index: 46; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: min(calc(100% - 32px), 440px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; border-radius: 999px; background: var(--nav); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid var(--nav-line); box-shadow: var(--shadow); animation: barUp .32s cubic-bezier(.2, .9, .25, 1) both; }
+.editbar button { border: 0; background: transparent; border-radius: 999px; padding: 12px 6px; font-weight: 700; font-size: .92rem; cursor: pointer; color: var(--fg); }
+.editbar button:not(:disabled):hover { background: var(--pill); }
+.editbar button:disabled { color: var(--off); cursor: default; }
+.editbar .danger { color: var(--stop); }
+body.editing .nav, body.editing .fab { display: none; }
+@keyframes circleIn { from { transform: scale(0); opacity: 0; } }
+@keyframes barUp { from { transform: translate(-50%, 120%); } }
+/* 전체 켜기·끄기 아이콘 */
+.summary .ic { border: 0; cursor: pointer; transition: background .25s, color .25s, transform .2s; }
+.summary .ic:active { transform: scale(.92); }
+.summary .ic.alloff { background: var(--surface-2); color: var(--off); }
+/* ⓘ 설명 */
+.has-tip { position: relative; }
+.lab { display: inline-flex; align-items: center; gap: 8px; }
+.info { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--muted); background: transparent; color: var(--muted); font: italic 700 .72rem/1 Georgia, "Times New Roman", serif; display: inline-grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
+.info[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.tip { position: absolute; left: 0; right: 0; top: calc(100% - 2px); z-index: 6; background: var(--fg); color: var(--bg); font-size: .82rem; line-height: 1.45; padding: 10px 12px; border-radius: 12px; box-shadow: var(--shadow); animation: pop .16s ease both; transform-origin: top left; }
+/* AI가 대신 작성 */
+.ai-fill { font-size: .82rem; color: var(--muted); }
+.unit.est input { padding-right: 92px; color: var(--accent); }
+.ai-note { font-size: .74rem; color: var(--muted); min-height: 1em; }
+/* 기상 미션 고르기 */
+.mission-pick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 480px) { .mission-pick { grid-template-columns: repeat(4, 1fr); } }
+.mission-more { display: grid; gap: 12px; }
+.mission-more:not([hidden]) { animation: moreIn .3s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes moreIn { from { opacity: 0; transform: translateY(-8px); } }
+.none-note { text-align: center; font-size: .84rem; color: var(--muted); padding: 10px; background: var(--surface-2); border-radius: 14px; }
+.memo-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.memo-add .btn { border-radius: 10px; padding-inline: 18px; }
+.memo-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.memo-list li { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 12px; background: var(--surface-2); font-size: .92rem; animation: moreIn .25s ease both; }
+.memo-list li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.memo-list li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.memo-list li button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 1.1rem; cursor: pointer; flex: none; }
+.memo-list li button:hover { background: var(--pill); color: var(--stop); }
+.memo-list .empty-li { background: transparent; color: var(--muted); font-size: .82rem; padding: 4px 2px; }
+.memo-list .empty-li::before { display: none; }
+.ring .none-btn { width: 100%; padding: 16px; font-size: 1.1rem; background: #FFFFFF; color: #000000; font-weight: 700; }
+.mission-pick input { position: absolute; opacity: 0; pointer-events: none; }
+.mission-pick span { display: grid; justify-items: center; gap: 6px; padding: 12px 4px; border-radius: 14px; background: var(--surface-2); font-size: .82rem; font-weight: 500; text-align: center; cursor: pointer; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .2s, background .2s; }
+.mission-pick svg { width: 26px; height: 26px; }
+.mission-pick input:checked + span { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.mission-pick input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mission-ex { text-align: center; display: grid; justify-items: center; gap: 8px; padding: 14px 8px; background: var(--surface-2); border-radius: 14px; }
+.ex-badge { background: #2F6BFF; color: #FFFFFF; font-size: .74rem; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
+.ex-body { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ex-body.small-ex { font-size: 1rem; }
+.ex-tiles { display: grid; gap: 4px; width: 120px; }
+.ex-tiles i { aspect-ratio: 1; border-radius: 4px; }
+.diff { display: grid; gap: 6px; padding: 12px 6px 2px; }
+.diff-h { display: flex; justify-content: center; gap: 8px; align-items: baseline; font-weight: 700; }
+.diff-h span { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.diff-wrap { position: relative; }
+.diff-range { -webkit-appearance: none; appearance: none; width: 100%; height: 30px; background: transparent; margin: 0; position: relative; z-index: 1; }
+.diff-range::-webkit-slider-runnable-track { height: 10px; border-radius: 999px; background: var(--track); }
+.diff-range::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; border-radius: 50%; background: #FFFFFF; margin-top: -10px; box-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
+.diff-range::-moz-range-track { height: 10px; border-radius: 999px; background: var(--track); }
+.diff-range::-moz-range-thumb { width: 30px; height: 30px; border: 0; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
+.diff-dots { position: absolute; left: 15px; right: 15px; top: 50%; transform: translateY(-50%); display: flex; justify-content: space-between; pointer-events: none; z-index: 2; }
+.diff-dots i { width: 4px; height: 4px; border-radius: 50%; background: rgba(255, 255, 255, .85); }
+.diff-ends { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); }
+.count-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 6px 0; }
+.count-row .lbl { justify-self: start; }
+.wheel-box { position: relative; width: 96px; }
+.wheel-box::before, .wheel-box::after { content: ""; position: absolute; left: 6px; right: 6px; height: 1px; background: var(--muted); pointer-events: none; z-index: 1; }
+.wheel-box::before { top: 44px; } .wheel-box::after { top: 88px; }
+.wheel { height: 132px; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; border-radius: 10px; -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); }
+.wheel::-webkit-scrollbar { display: none; }
+.wheel-pad { height: 44px; }
+.wheel-item { height: 44px; display: grid; place-items: center; scroll-snap-align: center; font-size: 1.4rem; font-weight: 500; color: var(--off); font-variant-numeric: tabular-nums; cursor: pointer; transition: color .15s, font-size .15s; }
+.wheel-item.on { color: var(--fg); font-size: 2rem; font-weight: 700; }
+.count-row .unit-lbl { justify-self: start; padding-left: 14px; font-weight: 700; }
+/* 울리는 화면 미션 */
+.m-head { display: flex; justify-content: space-between; align-items: center; }
+.m-big { text-align: center; font-size: clamp(2rem, 10vw, 2.8rem); font-weight: 700; font-variant-numeric: tabular-nums; padding: 6px 0; overflow-wrap: anywhere; }
+.m-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.ring .m-input input { font-size: 1.3rem; text-align: center; border-radius: 16px; padding: 12px; box-shadow: 0 0 0 2px #6E9BFF; }
+.m-input.wrong input { box-shadow: 0 0 0 2px #FF5E52; animation: shake .3s 1; }
+.tiles { display: grid; gap: 6px; }
+.tile { aspect-ratio: 1; border: 0; border-radius: 10px; cursor: pointer; transition: transform .15s, opacity .2s; }
+.tile:active { transform: scale(.94); }
+.tile.found { opacity: .25; transform: scale(.86); }
+.tile.wrong { animation: shake .3s 1; }
+.sentence { font-size: 1.25rem; font-weight: 700; text-align: center; padding: 14px; border-radius: 14px; background: #2A2B31; }
+.sentence.hidden-s { color: #6E6F76; font-weight: 500; font-size: 1rem; }
+
+@keyframes pulse { 50% { opacity: .35; } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="theme-wave" id="themeWave" aria-hidden="true" hidden></div>
+<header class="top">
+  <span class="app-name">AI 기상·출근 매니저 · 해커톤 시연판</span>
+  <span class="spacer"></span>
+</header>
+
+<div class="app">
+  <main class="results" id="results">
+    <section class="tabpanel" id="tab-home" role="tabpanel" aria-labelledby="t-home"></section>
+    <section class="tabpanel" id="tab-plan" role="tabpanel" aria-labelledby="t-plan" hidden></section>
+    <section class="tabpanel" id="tab-night" role="tabpanel" aria-labelledby="t-night" hidden></section>
+    <section class="tabpanel" id="tab-dawn" role="tabpanel" aria-labelledby="t-dawn" hidden></section>
+    <section class="tabpanel" id="tab-depart" role="tabpanel" aria-labelledby="t-depart" hidden></section>
+  </main>
+</div>
+
+<nav class="nav" aria-label="하루 흐름">
+  <div class="nav-inner tabs" role="tablist">
+    <span class="nav-ind" aria-hidden="true"></span>
+    <button class="tab" role="tab" id="t-home" aria-controls="tab-home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M4.5 5.5 7 3.5M19.5 5.5 17 3.5"/></svg>알람</button>
+    <button class="tab" role="tab" id="t-plan" aria-controls="tab-plan" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 19V9M12 19V5M19 19v-7"/></svg>계획</button>
+    <button class="tab" role="tab" id="t-night" aria-controls="tab-night" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5Z"/></svg>밤 브리핑</button>
+    <button class="tab" role="tab" id="t-dawn" aria-controls="tab-dawn" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 6V3M5.5 9.5 4 8M18.5 9.5 20 8"/></svg>새벽 점검</button>
+    <button class="tab" role="tab" id="t-depart" aria-controls="tab-depart" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4h9l3 3v14M10 12h.01M14 21v-6"/></svg>출발</button>
+  </div>
+</nav>
+
+<button class="fab" id="fab" type="button" aria-label="새 알람 추가" title="새 알람 추가">+</button>
+
+<div class="editbar" id="editBar" hidden role="toolbar" aria-label="선택한 알람">
+  <button type="button" id="ebOn" disabled>켜기</button><button type="button" id="ebOff" disabled>끄기</button><button type="button" class="danger" id="ebDel" disabled>삭제</button>
+</div>
+
+<div class="sheet-backdrop" id="editWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="editTitle" tabindex="-1">
+    <div class="grabber" aria-hidden="true"></div>
+    <div class="sheet-h"><button class="icon-btn" type="button" id="editCancel">취소</button><h3 id="editTitle">알람 편집</h3><button class="icon-btn" type="submit" form="planForm">저장</button></div>
+    <div class="edit-preview" id="editPreview" aria-live="polite"></div>
+    <form id="planForm" novalidate>
+      <fieldset>
+        <legend>알람 이름</legend>
+        <div class="field"><input type="text" id="aname" autocomplete="off" maxlength="20" aria-label="알람 이름"></div>
+      </fieldset>
+      <fieldset>
+        <legend>이동 정보</legend>
+        <div class="field"><label for="origin">출발지</label><input type="text" id="origin" autocomplete="off"></div>
+        <div class="field"><label for="dest">목적지</label><input type="text" id="dest" autocomplete="off" placeholder="예: 학교, 회사, 학원"></div>
+        <div class="row2">
+          <div class="field"><label for="arrive">도착 시각</label><input type="time" id="arrive"></div>
+          <div class="field"><label for="mode">이동 수단</label>
+            <select id="mode">
+              <option value="walk">도보</option>
+              <option value="bus">버스</option>
+              <option value="subway">지하철·경전철</option>
+              <option value="bike">자전거</option>
+              <option value="car">자가용</option>
+              <option value="mixed">혼합</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label for="walk">목적지까지 걸리는 시간</label><div class="unit" id="walkBox"><input type="number" id="walk" min="1" max="240" inputmode="numeric"><span id="walkUnit">분</span></div>
+          <label class="check ai-fill"><input type="checkbox" id="walkAi"> AI가 대신 작성해주기</label><p class="ai-note" id="walkNote"></p></div>
+        <div class="field"><label for="speed">평균 걷기 속도</label><div class="unit" id="speedBox"><input type="number" id="speed" min="2" max="8" step="0.1" inputmode="decimal" placeholder="선택"><span id="speedUnit">km/h</span></div>
+          <label class="check ai-fill"><input type="checkbox" id="speedAi"> AI가 대신 작성해주기</label></div>
+        <p class="hint">목적지까지 걸리는 시간은 집 문 앞에서 목적지까지 평소 걸리는 시간이에요. 버스·지하철은 걷는 시간과 타는 시간을 합친 값이에요. 걷기 속도를 넣으면 걷는 부분만 보통 속도(4.8km/h)와 비교해 다시 계산해요.</p>
+        <label class="check"><input type="checkbox" id="firstVisit"> 처음 가보는 곳이에요 (길찾기 +5분)</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>생활 정보</legend>
+        <div class="row2">
+          <div class="field"><label for="prep">준비 시간</label><div class="unit"><input type="number" id="prep" min="0" max="180" inputmode="numeric"><span>분</span></div></div>
+          <div class="field"><label for="minSleep">최소 수면량</label><div class="unit"><input type="number" id="minSleep" min="3" max="12" step="0.5" inputmode="decimal"><span>시간</span></div></div>
+        </div>
+        <div class="field"><label for="bed">오늘 취침 예정 시각</label><input type="time" id="bed"></div>
+        <div class="field"><label for="memoIn">아침에 챙길 것·리마인드 할 것</label>
+          <div class="memo-add"><input type="text" id="memoIn" maxlength="30" autocomplete="off" placeholder="예: 학생증, 우산 챙기기" enterkeyhint="done"><button class="btn primary" type="button" id="memoAdd">추가</button></div>
+          <ul class="memo-list" id="memoList" aria-live="polite"></ul>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>알람음과 반복</legend>
+        <div class="field"><label for="sound">알람음</label>
+          <div class="sound-row">
+            <select id="sound"></select>
+            <button class="btn small" type="button" id="previewBtn">미리 듣기</button>
+          </div>
+        </div>
+        <div class="field"><label for="volume">볼륨 <span class="num" id="volOut">70</span>%</label><input type="range" id="volume" min="0" max="100" step="5"></div>
+        <label class="switch" for="vibrate">진동 <input type="checkbox" id="vibrate" role="switch"></label>
+        <div class="field"><span class="lbl">요일 반복</span>
+          <div class="days" id="days"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>똑똑한 기능</legend>
+        <div class="switch has-tip"><span class="lab"><label for="bonus">덤 수면</label><button type="button" class="info" aria-label="덤 수면 설명 보기" aria-expanded="false">i</button></span><input type="checkbox" id="bonus" role="switch"><span class="tip" role="tooltip" hidden>AI가 도로 상황을 조사한 후 사용자가 수면을 더 취할 수 있도록 알람 시간을 늦춰줍니다.</span></div>
+        <div class="switch has-tip"><span class="lab"><label for="smart">스마트 웨이크업</label><button type="button" class="info" aria-label="스마트 웨이크업 설명 보기" aria-expanded="false">i</button></span><input type="checkbox" id="smart" role="switch"><span class="tip" role="tooltip" hidden>알람 20분 전부터 얕은 잠이 감지되면 그때 깨워 줍니다.</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>기상 미션</legend>
+        <div class="mission-pick" role="radiogroup" aria-label="기상 미션 종류">
+          <label><input type="radio" name="mission" value="none"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M4.5 5.5 7 3.5M19.5 5.5 17 3.5M9.5 13h5"/></svg>미션 없음</span></label>
+          <label><input type="radio" name="mission" value="math"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h5M7.5 4.5v5M14 7h5M5 16.5l4 4M9 16.5l-4 4M14 16h5M14 20h5"/></svg>수학 문제</span></label>
+          <label><input type="radio" name="mission" value="tile"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="4" y="13" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>색깔 타일 찾기</span></label>
+          <label><input type="radio" name="mission" value="type"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg>문장 따라쓰기</span></label>
+        </div>
+        <p class="none-note" id="noneNote" hidden>알람이 울리기만 하고 미션 없이 바로 끌 수 있어요.</p>
+        <div class="mission-more" id="missionMore">
+        <div class="mission-ex" id="missionEx" aria-live="polite"></div>
+        <div class="diff">
+          <div class="diff-h">어려움 <span id="levelOut">4단계</span></div>
+          <div class="diff-wrap"><input type="range" class="diff-range" id="level" min="1" max="7" step="1" aria-label="미션 난이도"><div class="diff-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          <div class="diff-ends"><span>쉬움</span><span>어려움</span></div>
+        </div>
+        <div class="count-row">
+          <span class="lbl">문제 개수</span>
+          <div class="wheel-box"><div class="wheel" id="countWheel" tabindex="0" role="spinbutton" aria-label="문제 개수" aria-valuemin="1" aria-valuemax="10"></div></div>
+          <span class="unit-lbl">회</span>
+        </div>
+        </div>
+        <input type="hidden" id="count">
+      </fieldset>
+
+      <button class="btn primary plan-btn" type="submit" id="planBtn">저장하고 계획 세우기</button>
+      <button class="btn del plan-btn" type="button" id="delBtn" hidden>이 알람 삭제</button>
+      <p class="ai-status" id="aiStatus"><span class="dot" id="aiDot"></span><span id="aiText">AI 연결 확인 중</span></p>
+    </form>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheetWrap" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="출발 전 준비물 확인" style="padding-top:16px"></div></div>
+<div class="ring" id="ring" hidden><div class="ring-inner" id="ringInner"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- 기본 도구 ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const toMin = (hhmm) => { const [h, m] = String(hhmm || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+const fmt = (min) => { const m = ((Math.round(min) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
+const fmt12 = (min) => { const x = ((Math.round(min) % 1440) + 1440) % 1440; const h = Math.floor(x / 60); return { ampm: h < 12 ? "오전" : "오후", t: `${(h % 12) || 12}:${String(x % 60).padStart(2, "0")}` }; };
+const untilText = (a) => { const now = new Date(); const n = now.getHours() * 60 + now.getMinutes(); let d = (((Math.round(a) - n) % 1440) + 1440) % 1440; if (d === 0) d = 1440; return `${Math.floor(d / 60)}시간 ${d % 60}분`; };
+const fmtDur = (min) => { const m = Math.round(min); const h = Math.floor(Math.abs(m) / 60), r = Math.abs(m) % 60; return (m < 0 ? "-" : "") + (h ? h + "시간 " : "") + (r || !h ? r + "분" : "").trim(); };
+const r1 = (x) => Math.round(x * 10) / 10;
+function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("wakeMgr:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("wakeMgr:" + k, JSON.stringify(v)); } catch { /* 저장 안 되면 무시 */ } }
+};
+
+/* ---------- 설정값 ---------- */
+const SOUNDS = [
+  { id: "bell", name: "맑은 종소리" },
+  { id: "bird", name: "아침 새소리" },
+  { id: "rise", name: "점점 커지는 벨" },
+  { id: "beep", name: "클래식 비프" },
+  { id: "marimba", name: "경쾌한 마림바" }
+];
+const DAYS = ["월", "화", "수", "목", "금", "토", "일"];
+const TIP_BONUS = "AI가 도로 상황을 조사한 후 사용자가 수면을 더 취할 수 있도록 알람 시간을 늦춰줍니다.";
+const TIP_SMART = "알람 20분 전부터 얕은 잠이 감지되면 그때 깨워 줍니다.";
+const MISSIONS = { none: "미션 없음", math: "수학 문제", tile: "색깔 타일 찾기", type: "문장 따라쓰기" };
+const missionText = (i) => i.mission === "none" ? MISSIONS.none : `${MISSIONS[i.mission] || MISSIONS.math} · ${i.level}단계 · ${i.count}개`;
+let memoItems = [];
+// 목적지까지 걸리는 시간 중 걸어서 가는 비율 (나머지는 타는 시간)
+const WALK_SHARE = { walk: 1, bike: 0, bus: .3, subway: .3, mixed: .3, car: .1 };
+const MODES = {
+  walk:   { label: "도보", ride: [0, 0], head: [0, 0], first: null, names: ["큰길 경유", "공원길", "학교 앞 골목", "시장길", "하천변 산책로"] },
+  bus:    { label: "버스", ride: [22, 34], head: [8, 15], first: 330, names: ["간선 7번", "급행 1004번", "좌석 2000번", "마을 3번 → 간선 51번", "지선 128번 → 급행 1004번"] },
+  subway: { label: "지하철·경전철", ride: [20, 32], head: [6, 10], first: 325, names: ["경전철 직행", "경전철 → 1호선 환승", "경전철 + 버스 15번", "부전-마산선", "광역 급행"] },
+  bike:   { label: "자전거", ride: [0, 0], head: [0, 0], first: null, names: ["자전거 도로 경유", "해반천 자전거길", "큰길 경유", "공원길", "골목 지름길"] },
+  car:    { label: "자가용", ride: [18, 30], head: [0, 0], first: null, names: ["해반천로 경유", "가야로 경유", "남해고속도로 경유", "장유 우회로", "창원터널 경유"] },
+  mixed:  { label: "혼합", ride: [24, 36], head: [7, 13], first: 330, names: ["버스 + 도보", "경전철 + 버스", "버스 + 경전철", "자전거 + 버스", "도보 + 지하철"] }
+};
+const STREETS = ["가야로", "해반천로", "김해대로", "금관대로", "분성로", "호계로", "활천로", "삼계로"];
+const WX = { "맑음": { walk: 1, prep: 0 }, "흐림": { walk: 1, prep: 0 }, "비": { walk: 1.2, prep: 5 }, "눈": { walk: 1.5, prep: 10 } };
+const SAFETY = 10, SIGNAL_SEC = 40, FIRST_VISIT = 5, ZONE_MIN = 1, RUSH_MIN = 3, RECOMMENDED_SLEEP = 8;
+const DEFAULTS = {
+  origin: "김해 내외동 우리집", dest: "창원컨벤션센터", arrive: "08:40", mode: "bus", walk: 45, speed: "", walkAi: false, speedAi: false,
+  firstVisit: false, prep: 40, minSleep: 6, bed: "23:30", memo: "학생증\n보조배터리\n수행평가 보고서 제출",
+  sound: "bell", volume: 70, vibrate: true, days: [0, 1, 2, 3, 4], bonus: true, smart: true, mission: "math", level: 4, count: 3
+};
+
+/* ---------- 상태 ---------- */
+const S = {
+  inp: null, weather: null, wxOverride: "auto", aiSound: null,
+  plan: null, dawn: { events: new Set(), running: false, result: null, records: [] },
+  finalAlarm: null, finalNote: "", sample: null, aiState: "checking",
+  wakeLog: store.get("wakeLog", []), departChecks: {},
+  alarms: [], selId: store.get("selId", null), openId: null, editId: null, editMode: false, editSel: new Set()
+};
+
+/* ---------- 알람 여러 개 ---------- */
+const SEED = () => [
+  { id: "a1", name: "해커톤 2일차", on: true, v: 4, inp: { ...DEFAULTS, days: [] } },
+  { id: "a2", name: "학교 등교", on: true, v: 4, inp: { ...DEFAULTS, dest: "김해 ○○고등학교", arrive: "08:10", mode: "walk", walk: 18, prep: 35, memo: "학생증\n체육복\n수학 익힘책", mission: "type", level: 2, count: 2 } },
+  { id: "a3", name: "토요일 학원", on: false, v: 4, inp: { ...DEFAULTS, dest: "내외동 학원가", arrive: "10:00", prep: 30, days: [5], walk: 20, memo: "학원 교재\n물병", mission: "tile", level: 3, bonus: false } }
+];
+function loadAlarms() {
+  let list = store.get("alarms", null);
+  if (!Array.isArray(list) || !list.length) {
+    list = SEED(); const old = store.get("inputs", null);
+    if (old) list[0].inp = { ...DEFAULTS, ...old };
+  }
+  // v3까지는 '도보 시간'만 저장했으니 타는 시간을 더해 '목적지까지 걸리는 시간'으로 옮김
+  const RIDE_AVG = { bus: 28, subway: 26, car: 24, mixed: 30 };
+  return list.map((a) => {
+    const inp = { ...DEFAULTS, ...a.inp }; delete inp.contact;
+    if (a.v !== 4) { inp.walk = Math.round(inp.walk + (RIDE_AVG[inp.mode] || 0)); if (!MISSIONS[inp.mission]) inp.mission = "tile"; }
+    return { id: String(a.id), name: String(a.name || "알람"), on: a.on !== false, v: 4, inp };
+  });
+}
+const saveAlarms = () => store.set("alarms", S.alarms);
+const selAlarm = () => S.alarms.find((a) => a.id === S.selId) || S.alarms[0];
+const byId = (id) => S.alarms.find((a) => a.id === id);
+function alarmMinFor(a) {
+  if (S.plan && a.id === S.selId) return S.finalAlarm ?? S.plan.t.latest;
+  const w = activeWeather(); const best = rankRoutes(genRoutes(a.inp), a.inp, w, {})[0];
+  return computeTimes(best, a.inp, w).latest;
+}
+function nextRing(a) {
+  const m = ((Math.round(alarmMinFor(a)) % 1440) + 1440) % 1440;
+  const now = new Date(); const nowMin = now.getHours() * 60 + now.getMinutes();
+  for (let d = 0; d <= 7; d++) {
+    if (d === 0 && m <= nowMin) continue;
+    const day = new Date(now); day.setDate(now.getDate() + d); const wd = (day.getDay() + 6) % 7;
+    if (!a.inp.days.length || a.inp.days.includes(wd)) { day.setHours(Math.floor(m / 60), m % 60, 0, 0); return day; }
+  }
+  return null;
+}
+function upcoming() {
+  let best = null;
+  for (const a of S.alarms) { if (!a.on) continue; const at = nextRing(a); if (at && (!best || at < best.at)) best = { a, at }; }
+  return best;
+}
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+const dateText = (d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]})`;
+function untilFor(at) {
+  const diff = Math.max(1, Math.round((at - new Date()) / 60000));
+  if (diff >= 1440) { const h = Math.floor((diff % 1440) / 60); return `${Math.floor(diff / 1440)}일${h ? ` ${h}시간` : ""} 후에`; }
+  return diff >= 60 ? `${Math.floor(diff / 60)}시간 ${diff % 60}분 후에` : `${diff}분 후에`;
+}
+function daysText(a) {
+  const ds = a.inp.days;
+  if (!ds.length) { const at = nextRing(a); return at ? dateText(at) : "한 번만"; }
+  if (ds.length === 7) return "매일";
+  if (ds.length === 5 && [0, 1, 2, 3, 4].every((i) => ds.includes(i))) return "주중";
+  if (ds.length === 2 && ds.includes(5) && ds.includes(6)) return "주말";
+  return [...ds].sort().map((i) => DAYS[i]).join(", ");
+}
+function heroText() {
+  const u = upcoming();
+  if (!u) return { h: "모든 알람이 꺼져 있어요", p: "알람을 켜거나 + 버튼으로 새로 만들어 보세요" };
+  const f = fmt12(u.at.getHours() * 60 + u.at.getMinutes());
+  return { h: `${untilFor(u.at)} 알람이 울립니다`, p: `${dateText(u.at)} ${f.ampm} ${f.t} · ${u.a.name}` };
+}
+
+/* ---------- 입력 ---------- */
+function buildInputs() {
+  $("#sound").innerHTML = SOUNDS.map((s) => `<option value="${s.id}">${s.name}</option>`).join("");
+  $("#days").innerHTML = DAYS.map((d, i) => `<label><input type="checkbox" id="d${i}" value="${i}"><span>${d}</span></label>`).join("");
+}
+function writeInputs(v) {
+  for (const k of ["origin", "dest", "arrive", "mode", "walk", "speed", "prep", "minSleep", "bed", "sound", "volume", "level"]) $("#" + k).value = v[k];
+  memoItems = String(v.memo || "").split("\n").map((x) => x.trim()).filter(Boolean); $("#memoIn").value = ""; renderMemo();
+  for (const k of ["firstVisit", "vibrate", "bonus", "smart", "walkAi", "speedAi"]) $("#" + k).checked = !!v[k];
+  DAYS.forEach((_, i) => { $("#d" + i).checked = v.days.includes(i); });
+  document.querySelectorAll('input[name="mission"]').forEach((r) => { r.checked = r.value === v.mission; });
+  $("#volOut").textContent = v.volume; $("#walkNote").textContent = "";
+  paintAiFill(); paintLevel(); setWheel(v.count);
+}
+function readInputs() {
+  const n = (id, d) => { const x = parseFloat($("#" + id).value); return Number.isFinite(x) ? x : d; };
+  return {
+    origin: $("#origin").value.trim() || "출발지", dest: $("#dest").value.trim() || "목적지",
+    arrive: $("#arrive").value || "08:40", mode: $("#mode").value,
+    walk: Math.max(1, n("walk", 20)), speed: $("#speed").value === "" ? "" : n("speed", ""), walkAi: $("#walkAi").checked, speedAi: $("#speedAi").checked,
+    firstVisit: $("#firstVisit").checked, prep: Math.max(0, n("prep", 30)), minSleep: Math.max(1, n("minSleep", 6)),
+    bed: $("#bed").value || "23:30", memo: memoItems.join("\n"),
+    sound: $("#sound").value, volume: n("volume", 70), vibrate: $("#vibrate").checked,
+    days: DAYS.map((_, i) => i).filter((i) => $("#d" + i).checked),
+    bonus: $("#bonus").checked, smart: $("#smart").checked,
+    mission: (document.querySelector('input[name="mission"]:checked') || { value: "math" }).value,
+    level: Math.min(7, Math.max(1, n("level", 4))), count: Math.min(10, Math.max(1, n("count", 3)))
+  };
+}
+
+/* ---------- 날씨 (규칙 기반 예측) ---------- */
+const CLIM = { 1: [-2, 8, .08, .06], 2: [0, 10, .1, .04], 3: [4, 15, .15, 0], 4: [9, 20, .18, 0], 5: [14, 24, .18, 0], 6: [19, 27, .3, 0], 7: [23, 30, .38, 0], 8: [24, 31, .32, 0], 9: [19, 27, .25, 0], 10: [12, 22, .12, 0], 11: [5, 16, .12, 0], 12: [-1, 10, .08, .05] };
+function tomorrow() { const d = new Date(); d.setDate(d.getDate() + 1); return d; }
+function ruleWeather(origin) {
+  const d = tomorrow(); const key = d.toISOString().slice(0, 10);
+  const r = rng(hash(key + origin)); const [lo, hi, pr, ps] = CLIM[d.getMonth() + 1];
+  const x = r(); let c = "맑음";
+  if (x < ps) c = "눈"; else if (x < ps + pr) c = "비"; else if (x < ps + pr + .3) c = "흐림";
+  const tmin = Math.round(lo + (r() - .5) * 4), tmax = Math.round(hi + (r() - .5) * 4);
+  const precip = c === "비" || c === "눈" ? 60 + Math.round(r() * 30) : c === "흐림" ? 20 + Math.round(r() * 20) : Math.round(r() * 10);
+  return { condition: c, tmin, tmax, precip, note: `${d.getMonth() + 1}월 평년 기온과 강수 확률로 추정한 값이에요.`, source: "rule", date: key };
+}
+function activeWeather() {
+  const w = S.weather || ruleWeather(S.inp.origin);
+  if (S.wxOverride !== "auto") return { ...w, condition: S.wxOverride, source: "manual", note: "시연용으로 날씨를 직접 바꿨어요." };
+  return w;
+}
+
+/* ---------- 경로 (시뮬레이션) ---------- */
+function genRoutes(inp) {
+  const M = MODES[inp.mode]; const r = rng(hash(inp.origin + "|" + inp.dest + "|" + inp.mode));
+  const streets = [...STREETS].sort(() => r() - .5);
+  return M.names.map((name, i) => {
+    const rideF = inp.mode === "walk" ? 0 : r1([1, 1.05, 1.1, 1.16, 1.22][i] * (0.95 + r() * 0.1));
+    const walkF = inp.mode === "walk" ? [1, 1.06, 1.1, 1.15, 1.22][i] : r1(0.85 + r() * 0.4);
+    const head = M.head[1] ? Math.round(M.head[0] + r() * (M.head[1] - M.head[0])) : 0;
+    const signals = (inp.mode === "walk" || inp.mode === "bike" ? 6 : 3) + Math.floor(r() * 8);
+    const cross = 2 + Math.floor(r() * 7);
+    const tags = { acc: r() < .38, kid: r() < .42, spd: r() < .32 };
+    const first = M.first ? M.first + Math.floor(r() * 3) * 5 : null;
+    const KMH = { walk: 4.8, bike: 15, bus: 22, subway: 30, car: 32, mixed: 24 };
+    const km = r1(inp.walk / 60 * KMH[inp.mode] * (inp.mode === "walk" ? walkF : rideF));
+    return { id: i, name, street: streets[i], rideF, walkF, head, signals, cross, tags, first, km };
+  });
+}
+function evalRoute(rt, inp, w, mod = {}) {
+  const wx = WX[w.condition] || WX["맑음"];
+  const share = WALK_SHARE[inp.mode] ?? .3;
+  let walkBase = inp.walk * share * rt.walkF;
+  const speedAdj = inp.speed !== "" && inp.speed > 0;
+  if (speedAdj) walkBase = walkBase * (4.8 / inp.speed);
+  const walk = walkBase * wx.walk;
+  const sigMin = rt.signals * SIGNAL_SEC / 60;
+  const wait = rt.head / 2;
+  const factor = mod.factor || 1;
+  const ride = inp.walk * (1 - share) * rt.rideF * (inp.mode === "bike" ? wx.walk : 1) * factor + (mod.extra?.[rt.id] || 0);
+  const zones = ((rt.tags.acc ? 1 : 0) + (rt.tags.kid ? 1 : 0)) * ZONE_MIN;
+  const fv = inp.firstVisit ? FIRST_VISIT : 0;
+  let total = walk + sigMin + wait + ride + zones + fv;
+  // 출발 시각을 대략 잡아 혼잡 시간대(07:20~08:30)에 타면 대기 +3분
+  const arr = toMin(inp.arrive);
+  const board = arr - total - SAFETY + (walk + sigMin) / 2;
+  const rush = rt.head > 0 && board >= 440 && board <= 510 ? RUSH_MIN : 0;
+  total += rush;
+  return { ...rt, share, walkBase, walk, sigMin, wait, ride, zones, fv, rush, speedAdj, total: Math.ceil(total), blocked: mod.blocked?.get(rt.id) || "" };
+}
+function rankRoutes(routes, inp, w, mod) {
+  const ev = routes.map((rt) => evalRoute(rt, inp, w, mod));
+  return ev.sort((a, b) => (a.blocked ? 1 : 0) - (b.blocked ? 1 : 0) || a.total - b.total);
+}
+
+/* ---------- 알람 계산 ---------- */
+const rideWord = (m) => m === "bike" ? "자전거" : m === "car" ? "운전" : "탑승";
+function computeTimes(best, inp, w) {
+  const wx = WX[w.condition] || WX["맑음"];
+  const arr = toMin(inp.arrive);
+  const depart = arr - best.total - SAFETY;
+  const prep = inp.prep + wx.prep;
+  const latest = depart - prep;
+  let bed = toMin(inp.bed); if (bed >= 720) bed -= 1440;
+  const earliest = bed + inp.minSleep * 60;
+  const short = earliest > latest ? earliest - latest : 0;
+  const recBed = latest - RECOMMENDED_SLEEP * 60;
+  const minBed = latest - inp.minSleep * 60;
+  const sleep = latest - bed;
+  const board = depart + (best.walk + best.sigMin) / 2 + best.wait;
+  const firstFail = best.first != null && board < best.first;
+  const firstLate = firstFail ? Math.ceil(best.first + best.ride + (best.walk + best.sigMin) / 2 + best.zones + best.fv - arr) : 0;
+  return { arr, depart, prep, wxPrep: wx.prep, latest, earliest, bed, short, recBed, minBed, sleep, board, firstFail, firstLate, brief: recBed - 60 };
+}
+function taxiOption(best, inp, mod = {}) {
+  const ride = Math.max(8, Math.round((best.ride || inp.walk * .4) * .75 * (mod.factor || 1)));
+  const total = 5 + ride + 2;
+  const fare = Math.round((4800 + best.km * 900) / 100) * 100;
+  return { total, fare, ride };
+}
+
+function buildPlan() {
+  const inp = S.inp, w = activeWeather();
+  const routes = genRoutes(inp);
+  const ranked = rankRoutes(routes, inp, w, {});
+  const best = ranked[0];
+  const t = computeTimes(best, inp, w);
+  S.plan = { inp, w, routes, ranked, best, t, taxi: taxiOption(best, inp) };
+  S.finalAlarm = t.latest; S.finalNote = "계획 그대로";
+  S.dawn.result = null; S.dawn.records = [];
+}
+
+/* ---------- 알람음 (Web Audio로 직접 합성) ---------- */
+let AC = null, loopTimer = null, master = null;
+function ctx() { if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = new C(); } if (AC.state === "suspended") AC.resume(); return AC; }
+function tone(ac, out, f, t0, dur, type = "sine", gain = .6, f2) {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(gain, t0 + .02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(out); o.start(t0); o.stop(t0 + dur + .05);
+}
+const PATTERNS = {
+  bell: (ac, o, t) => { tone(ac, o, 880, t, 1.1, "sine", .7); tone(ac, o, 1318, t + .35, 1.1, "sine", .5); return 1.6; },
+  bird: (ac, o, t) => { for (let i = 0; i < 4; i++) tone(ac, o, 2200 + i * 120, t + i * .14, .1, "sine", .5, 3200); return 1.4; },
+  rise: (ac, o, t) => { tone(ac, o, 660, t, .5, "triangle", .7); tone(ac, o, 660, t + .6, .5, "triangle", .7); return 1.5; },
+  beep: (ac, o, t) => { for (let i = 0; i < 3; i++) tone(ac, o, 1000, t + i * .22, .12, "square", .25); return 1.2; },
+  marimba: (ac, o, t) => { [523, 659, 784, 1046].forEach((f, i) => tone(ac, o, f, t + i * .16, .3, "sine", .6)); return 1.3; },
+  alarmMax: (ac, o, t) => { for (let i = 0; i < 6; i++) tone(ac, o, i % 2 ? 900 : 1250, t + i * .13, .11, "square", .35); return .85; }
+};
+function startSound(id, volume, { riseUp = false } = {}) {
+  stopSound(); const ac = ctx(); if (!ac) return;
+  master = ac.createGain(); master.connect(ac.destination);
+  const target = Math.max(0.0001, (volume / 100) * .9);
+  if (riseUp || id === "rise") { master.gain.setValueAtTime(target * .15, ac.currentTime); master.gain.linearRampToValueAtTime(target, ac.currentTime + 20); }
+  else master.gain.setValueAtTime(target, ac.currentTime);
+  const play = () => { const len = PATTERNS[id](ac, master, ac.currentTime + .02); loopTimer = setTimeout(play, len * 1000); };
+  play();
+}
+function stopSound() { clearTimeout(loopTimer); loopTimer = null; if (master) { try { master.disconnect(); } catch {} master = null; } }
+function preview(id, vol) { startSound(id, vol); setTimeout(stopSound, 2600); }
+
+/* ---------- 아이콘 ---------- */
+function wxIcon(c) {
+  const sun = `<circle cx="27" cy="27" r="10" fill="var(--wait)"/>${[0,45,90,135,180,225,270,315].map((a) => `<line x1="${27 + Math.cos(a * Math.PI / 180) * 15}" y1="${27 + Math.sin(a * Math.PI / 180) * 15}" x2="${27 + Math.cos(a * Math.PI / 180) * 20}" y2="${27 + Math.sin(a * Math.PI / 180) * 20}" stroke="var(--wait)" stroke-width="3" stroke-linecap="round"/>`).join("")}`;
+  const cloud = (y = 0) => `<path d="M14 ${36 + y} a9 9 0 0 1 3-17 a12 12 0 0 1 22 3 a8 8 0 0 1 1 14 z" fill="var(--muted)"/>`;
+  const drops = `<g stroke="var(--prep)" stroke-width="3" stroke-linecap="round"><line x1="18" y1="42" x2="16" y2="48"/><line x1="27" y1="42" x2="25" y2="48"/><line x1="36" y1="42" x2="34" y2="48"/></g>`;
+  const flakes = `<g fill="var(--prep)"><circle cx="17" cy="45" r="2.5"/><circle cx="27" cy="48" r="2.5"/><circle cx="37" cy="45" r="2.5"/></g>`;
+  const body = c === "맑음" ? sun : c === "흐림" ? cloud(4) : c === "비" ? cloud(-2) + drops : cloud(-2) + flakes;
+  return `<svg viewBox="0 0 54 54" role="img" aria-label="${c}">${body}</svg>`;
+}
+const srcTag = (w) => w.source === "ai" ? `<span class="src ai">AI 예측</span>` : w.source === "manual" ? `<span class="src">직접 선택</span>` : `<span class="src">규칙 예측</span>`;
+const soundName = (id) => (SOUNDS.find((s) => s.id === id) || SOUNDS[0]).name;
+
+/* ---------- 추천 알람음 ---------- */
+function recommendSound() {
+  if (S.aiSound && SOUNDS.some((s) => s.id === S.aiSound.id) && S.plan.w.source === "ai") return { ...S.aiSound, source: "ai" };
+  const { w, t } = S.plan;
+  if (t.short || t.sleep < 6.5 * 60) return { id: "rise", why: "잠이 부족한 날이라 작게 시작해서 천천히 커지는 소리가 덜 놀라요.", source: "rule" };
+  if (w.condition === "비" || w.condition === "눈") return { id: "beep", why: `${w.condition} 오는 날은 바깥 소리에 묻히지 않게 또렷한 소리가 좋아요.`, source: "rule" };
+  if (w.condition === "맑음") return { id: "bird", why: "맑은 아침에는 부드러운 새소리로 가볍게 깨워요.", source: "rule" };
+  return { id: "marimba", why: "흐린 날에는 경쾌한 소리로 기분을 올려요.", source: "rule" };
+}
+
+/* ---------- 1. 출근 계획 ---------- */
+function renderPlan() {
+  const { inp, w, ranked, best, t, taxi } = S.plan;
+  const mode = MODES[inp.mode];
+  const alerts = [];
+  if (t.short) alerts.push(["stop", "수면 부족", `취침 ${fmt(t.bed)} 기준으로 최소 수면 ${inp.minSleep}시간을 지키면 ${fmt(t.earliest)}에 일어나야 하는데, 제시간에 도착하려면 ${fmt(t.latest)}에는 일어나야 해요. <b>${fmtDur(t.short)}</b> 모자라요. ${fmt(t.minBed)} 전에 자거나 더 빠른 이동 수단을 골라 주세요.`]);
+  else alerts.push(["go", "수면 OK", `${fmt(t.bed)}에 자면 <b>${fmtDur(t.sleep)}</b> 자요. 최소 수면 ${inp.minSleep}시간보다 ${fmtDur(t.latest - t.earliest)} 여유가 있어요.`]);
+  if (t.firstFail) alerts.push(["stop", "첫차", `${fmt(t.board)}에 타야 하는데 첫차는 ${fmt(best.first)}이에요. 첫차를 타면 약 ${t.firstLate}분 늦어요. 택시는 약 ${taxi.total}분, 예상 ${taxi.fare.toLocaleString()}원이에요.`]);
+  else if (best.first != null) alerts.push(["go", "첫차", `첫차 ${fmt(best.first)} 이후인 ${fmt(t.board)}쯤 타요. 배차 간격은 ${best.head}분이에요.`]);
+  if (WX[w.condition].prep) alerts.push(["wait", w.condition, `${w.condition} 예보라 도보 시간 ×${WX[w.condition].walk}, 준비 시간 +${WX[w.condition].prep}분을 더했어요.`]);
+  if (best.rush) alerts.push(["wait", "혼잡", `${fmt(t.board)}은 사람이 몰리는 시간대(07:20~08:30)라 대기 시간 +${RUSH_MIN}분을 더했어요.`]);
+
+  // 타임라인 막대
+  const segs = [
+    ["prep", "준비", t.prep], ["walk", "도보·신호", best.walk + best.sigMin],
+    ["wait", "대기", best.wait + best.rush], ["ride", rideWord(inp.mode), best.ride],
+    ["extra", "구역·길찾기", best.zones + best.fv], ["buf", "안전", SAFETY]
+  ].filter((s) => s[2] > 0.05);
+  const span = t.arr - t.latest;
+  const bar = segs.map(([c, l, m]) => `<div class="seg ${c}" style="flex:${m}" title="${l} ${Math.round(m)}분">${m / span > .09 ? l : ""}</div>`).join("");
+  const pos = (m) => ((m - t.latest) / span * 100).toFixed(2) + "%";
+  const ticks = `<span style="left:0"><b>${fmt(t.latest)}</b>알람</span><span style="left:${pos(t.depart)}"><b>${fmt(t.depart)}</b>출발</span><span style="left:100%"><b>${fmt(t.arr - SAFETY)} → ${fmt(t.arr)}</b>도착 예상 → 마감</span>`;
+
+  // 계산 근거
+  const wx = WX[w.condition];
+  const calc = [
+    best.share ? [`걷는 부분 ${r1(inp.walk * best.share)}분${best.walkF !== 1 ? ` × 경로 ${best.walkF}` : ""}${best.speedAdj ? ` × (4.8 ÷ ${inp.speed}km/h)` : ""}${wx.walk !== 1 ? ` × ${w.condition} ${wx.walk}` : ""}`, best.walk] : null,
+    [`신호등 ${best.signals}개 × ${SIGNAL_SEC}초`, best.sigMin],
+    best.head ? [`배차 ${best.head}분의 절반 대기${best.rush ? ` + 혼잡 ${RUSH_MIN}분` : ""}`, best.wait + best.rush] : null,
+    best.ride ? [`${inp.mode === "bike" ? "자전거" : `${mode.label} ${rideWord(inp.mode)}`} ${r1(inp.walk * (1 - best.share))}분 × 경로 ${best.rideF}${inp.mode === "bike" && wx.walk !== 1 ? ` × ${w.condition} ${wx.walk}` : ""} (${esc(best.name)})`, best.ride] : null,
+    best.zones ? [`사고 다발·어린이 보호구역 ${best.zones}곳 × ${ZONE_MIN}분`, best.zones] : null,
+    best.fv ? [`처음 가보는 곳 길찾기`, best.fv] : null,
+    [`안전 버퍼`, SAFETY]
+  ].filter(Boolean);
+  const calcHtml = calc.map(([k, v]) => `<div><span>${k}</span><span class="num">${r1(v)}분</span></div>`).join("") +
+    `<div><span>이동 + 버퍼 합계 (올림)</span><span class="num">${best.total + SAFETY}분</span></div>`;
+
+  // AI 조절 범위
+  const lo = Math.min(t.earliest, t.latest) - 30, hi = Math.max(t.earliest, t.latest) + 30;
+  const p = (m) => ((m - lo) / (hi - lo) * 100).toFixed(2) + "%";
+  const rangeHtml = t.short
+    ? `<div class="range"><div class="fill bad" style="left:${p(t.latest)};right:calc(100% - ${p(t.earliest)})"></div><span class="pin" style="left:${p(t.latest)}">${fmt(t.latest)}</span><span class="pin" style="left:${p(t.earliest)}">${fmt(t.earliest)}</span><span class="pin below" style="left:${p(t.latest)}">가장 늦은 알람</span><span class="pin below" style="left:${p(t.earliest)}">최소 수면 기준</span></div><p class="small muted">두 시각이 뒤집혀서 AI가 움직일 수 있는 범위가 없어요. 늦은 알람이 우선이라 ${fmt(t.latest)}에 울려요.</p>`
+    : `<div class="range"><div class="fill" style="left:${p(t.earliest)};right:calc(100% - ${p(t.latest)})"></div><span class="pin" style="left:${p(t.earliest)}">${fmt(t.earliest)}</span><span class="pin" style="left:${p(t.latest)}">${fmt(t.latest)}</span><span class="pin below" style="left:${p(t.earliest)}">가장 이른 알람</span><span class="pin below" style="left:${p(t.latest)}">가장 늦은 알람</span></div><p class="small muted">가장 이른 알람 = 취침 ${fmt(t.bed)} + 최소 수면 ${inp.minSleep}시간. 가장 늦은 알람 = 출발 마감 ${fmt(t.depart)} − 준비 ${t.prep}분. AI는 이 사이에서만 알람을 옮겨요.</p>`;
+
+  const rows = ranked.map((r, i) => `<tr class="${i === 0 ? "best" : ""}">
+      <td><span class="rank">${i + 1}</span></td><td>${esc(r.name)}<div class="small muted">${esc(r.street)} 경유</div></td>
+      <td class="num"><b>${r.total}분</b></td><td class="num">${r.km}km</td><td class="num">${r.signals}개</td><td class="num">${r.cross}개</td>
+      <td>${r.tags.acc ? `<span class="tag acc">사고 다발</span>` : ""}${r.tags.kid ? `<span class="tag kid">어린이 보호</span>` : ""}${r.tags.spd ? `<span class="tag spd">속도 제한</span>` : ""}${!r.tags.acc && !r.tags.kid && !r.tags.spd ? `<span class="muted small">없음</span>` : ""}</td>
+      <td>${r.first != null ? `첫차 <span class="num">${fmt(r.first)}</span><div class="small muted">배차 ${r.head}분</div>` : `<span class="muted small">해당 없음</span>`}</td></tr>`).join("");
+
+  $("#tab-plan").innerHTML = `
+    <h2 class="page-title">출근 계획</h2>
+    ${pickerHtml()}
+    <div class="hero">
+      <div>
+        <p class="eyebrow">${esc(inp.origin)} → ${esc(inp.dest)} · ${mode.label}</p>
+        <p class="big-time">${fmt(t.latest)}</p>
+        <p class="sub">추천 알람 (가장 늦게 일어나도 되는 시각)${inp.smart ? `<br>스마트 웨이크업 구간 <span class="num">${fmt(t.latest - 20)}~${fmt(t.latest)}</span>` : ""}</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">권장 취침</div><div class="v">${fmt(t.recBed)}<small>${RECOMMENDED_SLEEP}시간 수면</small></div></div>
+        <div class="stat"><div class="k">최소 수면 마감 취침</div><div class="v">${fmt(t.minBed)}</div></div>
+        <div class="stat"><div class="k">출발 마감</div><div class="v">${fmt(t.depart)}</div></div>
+        <div class="stat"><div class="k">도착 예상</div><div class="v">${fmt(t.arr - SAFETY)}<small>마감 ${fmt(t.arr)}</small></div></div>
+      </div>
+    </div>
+    <div class="alerts">${alerts.map(([c, b, m]) => `<div class="alert ${c}"><span class="badge">${b}</span><span>${m}</span></div>`).join("")}</div>
+    <div class="card">
+      <div class="card-h"><h3>알람부터 도착까지</h3><span class="src sim">계산값</span></div>
+      <div class="bar">${bar}</div>
+      <div class="ticks">${ticks}</div>
+      <div class="legend"><span><i style="background:var(--prep)"></i>준비 ${t.prep}분</span><span><i style="background:var(--go)"></i>도보·신호</span><span><i style="background:color-mix(in srgb,var(--go) 60%,var(--surface))"></i>대기</span><span><i style="background:color-mix(in srgb,var(--go) 80%,var(--fg))"></i>${rideWord(inp.mode)}</span><span><i style="background:var(--wait)"></i>안전 버퍼 ${SAFETY}분</span></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h"><h3>내일 아침 날씨</h3>${srcTag(w)}</div>
+        <div class="wx">${wxIcon(w.condition)}<div><div class="temp">${w.tmin}° / ${w.tmax}°</div><div class="desc">${w.condition} · 강수 ${w.precip}%</div></div>
+          <label class="wx-override" for="wxSel">시연용 <select id="wxSel"><option value="auto">예측대로</option><option>맑음</option><option>흐림</option><option>비</option><option>눈</option></select></label></div>
+        <p class="small muted" style="margin-top:8px">${esc(w.note || "")}</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>이동 시간 계산 근거</h3><span class="src sim">1위 경로</span></div>
+        <div class="calc">${calcHtml}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>AI가 알람을 움직일 수 있는 범위</h3></div>
+      ${rangeHtml}
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>경로 후보 1~5위</h3><span class="src sim">시뮬레이션</span></div>
+      <p class="small muted" style="margin-bottom:8px">예상 소요 시간이 짧은 순이에요. 신호등, 대기, 구역 시간을 모두 넣고 계산했어요. 1위가 기본 경로, 2~5위는 새벽에 문제가 생기면 쓰는 대안이에요.</p>
+      <div class="table-wrap"><table><thead><tr><th>순위</th><th>경로</th><th class="num">소요</th><th class="num">거리</th><th class="num">신호등</th><th class="num">횡단보도</th><th>지나는 구역</th><th>대중교통</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>`;
+  $("#wxSel").value = S.wxOverride;
+  $("#wxSel").addEventListener("change", (e) => { S.wxOverride = e.target.value; buildPlan(); renderAll(); });
+}
+
+/* ---------- 2. 밤 브리핑 ---------- */
+function briefingText() {
+  const { inp, w, best, t } = S.plan; const rec = recommendSound();
+  const parts = [`내일 아침은 ${w.condition}, 기온 ${w.tmin}~${w.tmax}도로 예상돼요.`,
+    `${best.name}(으)로 가면 이동에 ${best.total}분이 걸려서 ${fmt(t.depart)}에 출발하면 돼요.`,
+    t.short ? `지금 계획대로면 최소 수면에서 ${fmtDur(t.short)}가 모자라요. ${fmt(t.minBed)} 전에는 꼭 누워 주세요.` : `알람은 ${fmt(t.latest)}이고, ${fmt(t.recBed)}에 자면 ${RECOMMENDED_SLEEP}시간을 잘 수 있어요.`];
+  if (w.condition === "비" || w.condition === "눈") parts.push("우산을 현관에 미리 꺼내 두세요.");
+  parts.push(`알람음은 '${soundName(rec.id)}'을(를) 추천해요.`);
+  return parts.join(" ");
+}
+function renderNight() {
+  const { inp, w, best, t } = S.plan; const rec = recommendSound();
+  const okSound = !!inp.sound, once = inp.days.length === 0;
+  const today = (new Date().getDay() + 6) % 7, tmrw = (today + 1) % 7;
+  const tmrwOn = once || inp.days.includes(tmrw);
+  $("#tab-night").innerHTML = `
+    <h2 class="page-title">밤 브리핑</h2>
+    ${pickerHtml()}
+    <div class="push" aria-label="밤 브리핑 알림 미리보기">
+      <div class="app-line"><span>AI 기상·출근 매니저</span><span class="num">${fmt(t.brief)}</span></div>
+      <strong>내일 알람 ${fmt(t.latest)} · ${w.condition} ${w.tmin}°/${w.tmax}°</strong>
+      <p>${t.short ? `최소 수면이 ${fmtDur(t.short)} 모자라요. 지금 바로 준비하세요.` : `${fmt(t.recBed)}에 자면 ${RECOMMENDED_SLEEP}시간 잘 수 있어요.`}</p>
+    </div>
+    <p class="small muted">권장 취침 ${fmt(t.recBed)}의 1시간 전인 <b class="num">${fmt(t.brief)}</b>에 이 알림이 와요.</p>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h"><h3>오늘 밤 브리핑</h3>${S.sample ? `<span class="src ai">AI 문장 가능</span>` : `<span class="src">템플릿</span>`}</div>
+        <div class="ai-text" id="briefText">${esc(briefingText())}</div>
+        <div class="btn-row" style="margin-top:10px">${S.sample ? `<button class="btn small" id="aiBriefBtn" type="button">AI 브리핑 받기</button>` : `<span class="small muted">AI가 연결되면 AI가 브리핑 문장을 써요.</span>`}<span class="small muted" id="briefNote"></span></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>상황별 추천 알람음</h3>${rec.source === "ai" ? `<span class="src ai">AI 추천</span>` : `<span class="src">규칙 추천</span>`}</div>
+        <p style="font-weight:700;font-size:1.1rem">${soundName(rec.id)}</p>
+        <p class="small muted" style="margin:4px 0 10px">${esc(rec.why)}</p>
+        <div class="btn-row"><button class="btn small" type="button" id="recPlay">미리 듣기</button>${inp.sound === rec.id ? `<span class="small" style="color:var(--go);font-weight:700">이미 이 소리로 설정됨</span>` : `<button class="btn small primary" type="button" id="recSet">이 소리로 설정</button>`}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>자기 전에 확인할 설정</h3></div>
+      <div class="checklist">
+        <div class="ck"><span class="mark ${okSound ? "ok" : "no"}">${okSound ? "✓" : "!"}</span><span class="grow">알람음: ${soundName(inp.sound)} · 볼륨 ${inp.volume}%</span><button class="btn small" type="button" data-focus="sound">바꾸기</button></div>
+        <div class="ck"><span class="mark ${inp.vibrate ? "ok" : "no"}">${inp.vibrate ? "✓" : "!"}</span><span class="grow">휴대폰 진동: <b>${inp.vibrate ? "켜짐" : "꺼짐"}</b></span><button class="btn small" type="button" id="vibToggle">${inp.vibrate ? "끄기" : "켜기"}</button></div>
+        <div class="ck"><span class="mark ${tmrwOn ? "ok" : "no"}">${tmrwOn ? "✓" : "!"}</span><span class="grow">요일 반복: ${once ? "없음 (다음 한 번만 울려요)" : inp.days.map((d) => DAYS[d]).join(" ")}${!tmrwOn ? ` <span style="color:var(--wait);font-weight:700">· 내일(${DAYS[tmrw]})은 꺼져 있어요</span>` : ""}</span><button class="btn small" type="button" data-focus="d0">고치기</button></div>
+        <div class="ck"><span class="mark ok">✓</span><span class="grow">덤 수면 ${inp.bonus ? "켜짐" : "꺼짐"} · 스마트 웨이크업 ${inp.smart ? "켜짐" : "꺼짐"} · 미션 ${missionText(inp)}</span></div>
+      </div>
+    </div>`;
+  $("#recPlay").onclick = () => preview(rec.id, inp.volume);
+  const set = $("#recSet"); if (set) set.onclick = () => { patchAlarm(S.selId, { sound: rec.id }, true); toast(`알람음을 '${soundName(rec.id)}'(으)로 바꿨어요.`); };
+  $("#vibToggle").onclick = () => patchAlarm(S.selId, { vibrate: !inp.vibrate }, true);
+  document.querySelectorAll("#tab-night [data-focus]").forEach((b) => b.onclick = () => { openEdit(S.selId); const el = $("#" + b.dataset.focus); setTimeout(() => { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus(); }, 60); });
+  const ab = $("#aiBriefBtn"); if (ab) ab.onclick = aiBriefing;
+}
+
+/* ---------- 3. 새벽 점검 ---------- */
+const EVENTS = [
+  { id: "work", label: "공사 진행", desc: "1위 경로 +8분" },
+  { id: "acc", label: "교통사고", desc: "1위 경로 +12분" },
+  { id: "flood", label: "도로 침수", desc: "1위 경로 통행 불가" },
+  { id: "slide", label: "산사태", desc: "2위 경로 통행 불가" },
+  { id: "light", label: "교통량 매우 적음", desc: "탑승 시간 −30%", good: true }
+];
+function dawnMods() {
+  const { ranked } = S.plan; const ev = S.dawn.events;
+  const mod = { extra: {}, blocked: new Map(), factor: 1 };
+  const r1st = ranked[0], r2nd = ranked[1];
+  if (ev.has("work")) mod.extra[r1st.id] = (mod.extra[r1st.id] || 0) + 8;
+  if (ev.has("acc")) mod.extra[r1st.id] = (mod.extra[r1st.id] || 0) + 12;
+  if (ev.has("flood")) mod.blocked.set(r1st.id, `${r1st.street} 도로 침수`);
+  if (ev.has("slide") && r2nd) mod.blocked.set(r2nd.id, `${r2nd.street} 산사태`);
+  if (ev.has("light")) mod.factor = 0.7;
+  return mod;
+}
+function dawnCheckpoints() {
+  const { t } = S.plan; const setAt = t.bed; const alarm = t.latest;
+  const mid = Math.round((setAt + alarm) / 2);
+  const pts = [{ t: mid, label: "중간 점검" }];
+  for (let m = 120; m >= 30; m -= 10) pts.push({ t: alarm - m, label: `알람 ${m}분 전` });
+  return pts.sort((a, b) => a.t - b.t);
+}
+function baseTraffic(m) { const x = ((m % 1440) + 1440) % 1440; return 25 + 75 * Math.exp(-(((x - 465) / 75) ** 2)); }
+function renderDawn() {
+  const { t, inp } = S.plan; const d = S.dawn;
+  const pts = dawnCheckpoints();
+  $("#tab-dawn").innerHTML = `
+    <h2 class="page-title">새벽 점검</h2>
+    ${pickerHtml()}
+    <div class="card">
+      <div class="card-h"><h3>새벽에 무슨 일이 생겼을까요?</h3><span class="src sim">시연용 상황</span></div>
+      <p class="small muted" style="margin-bottom:10px">상황을 고르고 점검을 돌려 보세요. 알람 설정 시각(${fmt(t.bed)})과 알람(${fmt(t.latest)})의 중간인 <span class="num">${fmt(pts[0].t)}</span>에 한 번, 알람 120분 전부터 30분 전까지 10분마다 경로를 확인해요.</p>
+      <div class="events">${EVENTS.map((e) => `<button type="button" class="chip ${e.good ? "good" : ""}" data-ev="${e.id}" aria-pressed="${d.events.has(e.id)}">${e.label}<span class="muted small"> · ${e.desc}</span></button>`).join("")}</div>
+      <div class="btn-row" style="margin-top:12px"><button class="btn primary" type="button" id="dawnRun" ${d.running ? "disabled" : ""}>새벽 점검 돌려보기</button><button class="btn ghost small" type="button" id="dawnReset">초기화</button><span class="small muted">덤 수면 ${inp.bonus ? "켜짐" : "꺼짐"}</span></div>
+    </div>
+    <div class="grid2">
+      <div class="card chart">
+        <div class="card-h"><h3>경로 교통량 기록</h3><span class="src sim">시뮬레이션</span></div>
+        <div id="dawnChart">${d.records.length ? chartSvg(d.records) : `<p class="empty">점검을 돌리면 평소 교통량(점선)과 오늘 교통량(실선)이 그려져요.</p>`}</div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>점검 기록</h3><span class="small muted">${d.records.length}/${pts.length}회</span></div>
+        <div class="log" id="dawnLog">${d.records.map(logRow).join("") || `<p class="empty">아직 기록이 없어요.</p>`}</div>
+      </div>
+    </div>
+    <div id="dawnDecision">${d.result ? decisionHtml(d.result) : ""}</div>`;
+  document.querySelectorAll("#tab-dawn [data-ev]").forEach((b) => b.onclick = () => {
+    if (d.running) return; const id = b.dataset.ev;
+    d.events.has(id) ? d.events.delete(id) : d.events.add(id);
+    d.result = null; d.records = []; S.finalAlarm = S.plan.t.latest; S.finalNote = "계획 그대로"; renderDawn();
+  });
+  $("#dawnRun").onclick = runDawn;
+  $("#dawnReset").onclick = () => { if (d.running) return; d.events.clear(); d.result = null; d.records = []; S.finalAlarm = S.plan.t.latest; S.finalNote = "계획 그대로"; renderDawn(); renderHome(); };
+}
+function logRow(r) {
+  return `<div><span class="t">${fmt(r.t)}</span><span>${r.label} · 교통량 <b class="num">${r.v}</b> (평소 ${r.b})${r.msg ? ` · <span class="${r.good ? "good" : "warn"}">${esc(r.msg)}</span>` : ""}</span></div>`;
+}
+function chartSvg(recs) {
+  const W = 600, H = 210, L = 34, R = 26, T = 14, B = 34;
+  const all = dawnCheckpoints(); const n = all.length;
+  const x = (i) => L + (W - L - R) * (n === 1 ? 0 : i / (n - 1));
+  const y = (v) => T + (H - T - B) * (1 - v / 140);
+  const grid = [0, 50, 100].map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("");
+  const base = all.map((p, i) => `${x(i)},${y(Math.round(baseTraffic(p.t)))}`).join(" ");
+  const today = recs.map((r) => `${x(r.i)},${y(r.v)}`).join(" ");
+  const worse = recs.some((r) => r.v > r.b * 1.15);
+  const col = worse ? "var(--stop)" : "var(--go)";
+  const last = recs[recs.length - 1];
+  const xl = all.map((p, i) => (i === 0 || i === n - 1 || (i % 3 === 0 && i < n - 2)) ? `<text x="${x(i)}" y="${H - 12}" text-anchor="${i === 0 ? "start" : i === n - 1 ? "end" : "middle"}">${fmt(p.t)}</text>` : "").join("");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="교통량 기록 그래프">
+    ${grid}<polyline points="${base}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 5"/>
+    <polyline points="${today}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>
+    ${recs.map((r) => `<circle cx="${x(r.i)}" cy="${y(r.v)}" r="${r === last ? 5 : 3}" fill="${col}"/>`).join("")}
+    ${xl}<text x="${L}" y="${T - 2}">교통량 지수 (평소 아침 최고 = 100)</text></svg>`;
+}
+function runDawn() {
+  const d = S.dawn; if (d.running) return;
+  d.running = true; d.records = []; d.result = null;
+  renderDawn();
+  const { ranked } = S.plan; const pts = dawnCheckpoints(); const ev = d.events;
+  const r = rng(hash([...ev].sort().join(",") + S.plan.inp.origin));
+  const detectAt = Math.min(pts.length - 1, 3 + Math.floor(r() * 4));
+  let i = 0;
+  const step = () => {
+    const p = pts[i]; const b = Math.round(baseTraffic(p.t));
+    let f = 1, msg = "", good = false;
+    if (i >= detectAt) {
+      if (ev.has("light")) f *= .6;
+      f *= 1 + (ev.has("acc") ? .3 : 0) + (ev.has("work") ? .12 : 0) + (ev.has("flood") ? .2 : 0) + (ev.has("slide") ? .08 : 0);
+      if (i === detectAt) {
+        const found = [];
+        if (ev.has("work")) found.push(`공사: ${ranked[0].street}`);
+        if (ev.has("acc")) found.push(`사고: ${ranked[0].street}`);
+        if (ev.has("flood")) found.push(`침수: ${ranked[0].street} 통행 불가`);
+        if (ev.has("slide") && ranked[1]) found.push(`산사태: ${ranked[1].street} 통행 불가`);
+        if (ev.has("light")) { found.push("평소보다 한산함"); good = found.length === 1; }
+        msg = found.join(", ");
+      }
+    } else if (i === 0) { msg = "이상 없음"; good = true; }
+    const v = Math.max(5, Math.round(b * f + (r() - .5) * 6));
+    d.records.push({ i, t: p.t, label: p.label, v, b, msg, good });
+    const log = $("#dawnLog"); if (log) { log.innerHTML = d.records.map(logRow).join(""); log.scrollTop = log.scrollHeight; }
+    const ch = $("#dawnChart"); if (ch) ch.innerHTML = chartSvg(d.records);
+    i++;
+    if (i < pts.length) setTimeout(step, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220);
+    else { d.running = false; decide(); }
+  };
+  step();
+}
+function decide() {
+  const { inp, w, routes, best, t } = S.plan; const ev = S.dawn.events;
+  const mod = dawnMods();
+  const ranked = rankRoutes(routes, inp, w, mod);
+  const avail = ranked.filter((r) => !r.blocked);
+  const nb = avail[0];
+  const nt = computeTimes(nb, inp, w);
+  const delay = nb.total - best.total;
+  const taxi = taxiOption(best, inp, mod);
+  let type = "same", alarm = t.latest, note = "평소와 비슷해서 알람을 그대로 둬요.";
+  if (delay > 0) {
+    alarm = nt.latest; type = delay >= 10 ? "b" : "earlier";
+    note = delay >= 10 ? `${delay}분 이상 늦어질 수 있어서 플랜 B를 준비했어요. 알람을 ${fmt(t.latest)}에서 ${fmt(alarm)}로 ${delay}분 앞당겨요.` : `${delay}분 늦어질 것 같아 알람을 ${fmt(alarm)}로 ${delay}분 앞당겨요.`;
+  } else if (delay < 0) {
+    if (inp.bonus) { const plus = Math.min(10, -delay); alarm = t.latest + plus; type = "bonus"; note = `길이 평소보다 ${-delay}분 빨라서 덤 수면 ${plus}분을 드려요. 알람이 ${fmt(t.latest)}에서 ${fmt(alarm)}로 늦춰져요.`; }
+    else note = `길이 ${-delay}분 빨라졌지만 덤 수면이 꺼져 있어서 알람은 그대로예요.`;
+  }
+  const sleepWarn = alarm < t.earliest ? `앞당긴 알람이 최소 수면 기준(${fmt(t.earliest)})보다 빨라요. 택시를 타면 ${fmt(alarm + (nb.total - taxi.total))}까지 잘 수 있어요.` : "";
+  S.dawn.result = { type, alarm, note, ranked, nb, delay, taxi, blockedList: [...mod.blocked.values()], sleepWarn, firstFail: nt.firstFail, nt };
+  S.finalAlarm = alarm; S.finalNote = note;
+  renderDawn(); renderHome(); renderDepart();
+}
+function decisionHtml(res) {
+  const { t } = S.plan;
+  const head = res.type === "b" ? "플랜 B 발동" : res.type === "bonus" ? "덤 수면" : res.type === "earlier" ? "알람 앞당김" : "변화 없음";
+  const blocked = res.blockedList.length ? `<div class="alert stop"><span class="badge">통행 불가</span><span>${res.blockedList.map(esc).join(", ")} 구간을 지날 수 없어요. 그 길을 쓰는 경로는 빼고 다시 골랐어요.</span></div>` : "";
+  let alt = "";
+  if (res.type === "b" || res.blockedList.length) {
+    const rows = res.ranked.map((r) => `<tr class="${r === res.nb ? "best" : ""} ${r.blocked ? "blocked" : ""}"><td>${esc(r.name)}</td><td class="num">${r.blocked ? "-" : r.total + "분"}</td><td class="num">${r.blocked ? "-" : fmt(computeTimes(r, S.plan.inp, S.plan.w).latest)}</td><td class="reason">${r.blocked ? esc(r.blocked) : r === res.nb ? "추천" : ""}</td></tr>`).join("");
+    const taxiAlarm = computeTimes({ ...res.nb, total: res.taxi.total, walk: 0, sigMin: 0, wait: 0, fv: 0, first: null }, S.plan.inp, S.plan.w).latest;
+    alt = `<div class="table-wrap" style="margin-top:10px"><table style="min-width:440px"><thead><tr><th>대안</th><th class="num">소요</th><th class="num">이 경로면 알람</th><th></th></tr></thead><tbody>${rows}
+      <tr><td>택시 (호출 대기 5분 포함)<div class="small muted">예상 ${res.taxi.fare.toLocaleString()}원 · 시뮬레이션</div></td><td class="num">${res.taxi.total}분</td><td class="num">${fmt(taxiAlarm)}</td><td class="reason"></td></tr></tbody></table></div>`;
+  }
+  return `<div class="card decision ${res.type}">
+    <div class="card-h"><h3>${head}</h3><span class="num" style="font-weight:600;font-size:1.3rem">${fmt(res.alarm)}</span></div>
+    <div class="stack">${blocked}<p>${esc(res.note)}</p>${res.sleepWarn ? `<div class="alert wait"><span class="badge">수면</span><span>${esc(res.sleepWarn)}</span></div>` : ""}${res.firstFail ? `<div class="alert stop"><span class="badge">첫차</span><span>바뀐 경로로는 첫차 전에 출발해야 해요. 택시나 자가용을 고려하세요.</span></div>` : ""}</div>
+    ${alt}
+    <div class="btn-row" style="margin-top:12px"><button class="btn primary small" type="button" data-go="home">이 알람으로 기상 시연하기</button></div></div>`;
+}
+
+/* ---------- 4. 기상 ---------- */
+let sim = null;
+const ICON = {
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 4.5v15M4.5 12h15"/></svg>`,
+  more: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="18.5" r="1.7"/></svg>`,
+  alarm: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M4.5 5.5 7 3.5M19.5 5.5 17 3.5"/></svg>`,
+  alarmOff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M4.5 5.5 7 3.5M19.5 5.5 17 3.5M5 20 19 6"/></svg>`,
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>`,
+  grip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 8h14M5 12h14M5 16h14"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10Z"/></svg>`
+};
+function pickerHtml() {
+  if (S.alarms.length < 2) return "";
+  return `<div class="picker" role="group" aria-label="어느 알람 기준으로 볼지 고르기">${S.alarms.map((a) => { const f = fmt12(alarmMinFor(a)); return `<button type="button" class="pick ${a.on ? "" : "off"}" data-pick="${a.id}" aria-pressed="${a.id === S.selId}">${f.ampm} ${f.t} · ${esc(a.name)}</button>`; }).join("")}</div>`;
+}
+function rowHtml(a) {
+  const f = fmt12(alarmMinFor(a)); const i = a.inp;
+  if (S.editMode) {
+    const pk = S.editSel.has(a.id);
+    return `<div class="arow edit ${a.on ? "" : "off"} ${pk ? "picked" : ""}" data-id="${a.id}">
+      <div class="arow-top">
+        <button class="arow-main" type="button" aria-pressed="${pk}" aria-label="${f.ampm} ${f.t} ${esc(a.name)} 선택">
+          <span class="pick-circle" aria-hidden="true"></span>
+          <span class="arow-txt"><span class="alarm-time"><span class="ampm">${f.ampm}</span><span class="t">${f.t}</span></span><span class="arow-sub">${esc(a.name)} · ${daysText(a)}</span></span>
+        </button>
+        <button class="grip" type="button" aria-label="${esc(a.name)} 순서 바꾸기 (끌거나 위·아래 화살표)" title="끌어서 순서 바꾸기">${ICON.grip}</button>
+      </div></div>`;
+  }
+  const open = a.id === S.openId;
+  const opt = (k, v) => `<div class="opt"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const sw = (key, label, tip) => `<div class="opt switch ${tip ? "has-tip" : ""}"><span class="lab"><label for="o-${key}-${a.id}">${label}</label>${tip ? `<button type="button" class="info" aria-label="${label} 설명 보기" aria-expanded="false">i</button>` : ""}</span><input type="checkbox" role="switch" id="o-${key}-${a.id}" data-opt="${key}" ${i[key] ? "checked" : ""}>${tip ? `<span class="tip" role="tooltip" hidden>${tip}</span>` : ""}</div>`;
+  return `<div class="arow ${a.on ? "" : "off"} ${open ? "open" : ""} ${a.id === S.selId ? "sel" : ""}" data-id="${a.id}">
+    <div class="arow-top">
+      <button class="arow-main" type="button" aria-expanded="${open}" aria-controls="more-${a.id}">
+        <span class="arow-txt"><span class="alarm-time"><span class="ampm">${f.ampm}</span><span class="t">${f.t}</span></span>
+        <span class="arow-sub"><span class="pin-dot"></span>${esc(a.name)} · ${daysText(a)}<span class="chev" aria-hidden="true">⌄</span></span></span>
+      </button>
+      <label class="switch" aria-label="${esc(a.name)} 알람 켜고 끄기"><input type="checkbox" role="switch" data-on="${a.id}" ${a.on ? "checked" : ""}></label>
+    </div>
+    <div class="arow-more" id="more-${a.id}" ${open ? "" : "inert"}><div class="arow-more-in"><div class="arow-more-pad">
+      <div class="opts">
+        ${opt("경로", `${esc(i.origin)} → ${esc(i.dest)}`)}
+        ${opt("이동", `${MODES[i.mode].label} ${i.walk}분${i.walkAi ? "(예상)" : ""} · <span class="num">${i.arrive}</span> 도착`)}
+        ${opt("준비·수면", `준비 ${i.prep}분 · 최소 ${i.minSleep}시간`)}
+        ${opt("알람음", soundName(i.sound))}
+        <div class="opt vol"><span class="k">볼륨</span><input type="range" min="0" max="100" step="5" value="${i.volume}" data-opt="volume" aria-label="${esc(a.name)} 볼륨"><span class="v num" data-volout>${i.volume}%</span></div>
+        ${sw("vibrate", "진동")}
+        ${sw("bonus", "덤 수면", TIP_BONUS)}
+        ${sw("smart", "스마트 웨이크업", TIP_SMART)}
+        ${opt("기상 미션", missionText(i))}
+        ${opt("반복", i.days.length ? i.days.map((d) => DAYS[d]).join(" ") : "없음 (한 번만)")}
+      </div>
+      <div class="btn-row">
+        <button class="btn primary small" type="button" data-act="edit">전체 편집</button>
+        <button class="btn small" type="button" data-act="plan">계획 보기</button>
+        <button class="btn small" type="button" data-act="ring" ${a.on ? "" : "disabled"}>지금 울려 보기</button>
+      </div>
+    </div></div></div>
+  </div>`;
+}
+function renderHome() {
+  if (!S.plan) return;
+  const on = S.alarms.filter((a) => a.on).length; const ht = heroText(); const ed = S.editMode;
+  document.body.classList.toggle("editing", ed); $("#editBar").hidden = !ed;
+  $("#tab-home").innerHTML = `
+    <div class="hero-home"><h2 id="heroH">${ed ? "알람 편집" : ht.h}</h2><p id="heroP">${ed ? editHint() : esc(ht.p)}</p></div>
+    ${ed ? `<div class="toolbar editing">
+      <button class="edit-exit" type="button" id="editExit">편집 나가기</button>
+      <button class="pick-all ${S.editSel.size === S.alarms.length ? "picked" : ""}" type="button" id="pickAll" aria-pressed="${S.editSel.size === S.alarms.length}"><span class="pick-circle" aria-hidden="true"></span>전체</button>
+    </div>` : `<div class="toolbar">
+      <button class="tool-btn theme-btn" type="button" id="themeBtn"></button>
+      <button class="tool-btn" type="button" id="moreBtn" aria-label="더 보기" title="더 보기" aria-haspopup="menu" aria-expanded="false">${ICON.more}</button>
+      <div class="menu" id="moreMenu" role="menu" hidden>
+        <button type="button" role="menuitem" data-menu="edit">편집</button>
+        <button type="button" role="menuitem" data-menu="reset">예시 알람으로 되돌리기</button>
+      </div>
+    </div>
+    <div class="summary"><button class="ic ${on ? "" : "alloff"}" type="button" id="allToggle" aria-pressed="${on > 0}" aria-label="모든 알람 ${on ? "끄기" : "켜기"}" title="모든 알람 ${on ? "끄기" : "켜기"}">${ICON.alarm}</button><span>내 알람</span><span class="cnt" title="켜진 알람">${ICON.alarm}<b id="cntOn">${on}</b></span><span class="cnt dim" title="꺼진 알람">${ICON.alarmOff}<b id="cntOff">${S.alarms.length - on}</b></span></div>`}
+    <div class="alarm-list" id="alarmList">${S.alarms.map(rowHtml).join("")}</div>
+    <p class="small muted list-hint">${ed ? "왼쪽 원을 눌러 고르고 아래에서 삭제하거나 켜고 끌 수 있어요. 오른쪽 줄 세 개를 끌면 순서가 바뀌어요." : "알람을 누르면 설정이 펼쳐지고 바로 바꿀 수 있어요. 주황 점이 붙은 알람이 계획·밤 브리핑·새벽 점검·출발 화면의 기준이에요."}</p>
+    <div class="card sleep-sim" id="simBox"></div>
+    <div class="card">
+      <div class="card-h"><h3>기상 기록</h3><span class="small muted">이 기기에만 저장돼요</span></div>
+      <div class="wake-log">${S.wakeLog.length ? S.wakeLog.slice(-7).reverse().map((l) => `<div><span>${esc(l.date)}</span><span>알람 <b class="num">${l.alarm}</b> → 기상 <b class="num">${l.woke}</b> · ${esc(l.how)}</span></div>`).join("") : `<p class="empty">미션을 끝내면 실제 기상 시각이 여기에 쌓여요.</p>`}</div>
+    </div>`;
+  if (ed) { $("#simBox").hidden = true; paintEditBar(); } else { renderSimBox(); paintThemeBtn(); }
+}
+const editHint = () => S.editSel.size ? `${S.editSel.size}개 선택됨` : "삭제하거나 순서를 바꿀 알람을 고르세요";
+function paintEditBar() {
+  const n = S.editSel.size; ["#ebOn", "#ebOff", "#ebDel"].forEach((k) => { $(k).disabled = !n; });
+  $("#ebDel").textContent = n ? `삭제 (${n})` : "삭제";
+  const p = $("#heroP"); if (p && S.editMode) p.textContent = editHint();
+  const all = $("#pickAll"); if (all) { const f = n === S.alarms.length; all.classList.toggle("picked", f); all.setAttribute("aria-pressed", String(f)); }
+}
+function setEditMode(on) {
+  S.editMode = on; S.editSel.clear(); if (on) { S.openId = null; stopSleepSim(); }
+  renderHome();
+  if (!on) { const m = $("#moreBtn"); if (m) m.focus({ preventScroll: true }); } else $("#editExit").focus({ preventScroll: true });
+}
+function togglePick(id) {
+  S.editSel.has(id) ? S.editSel.delete(id) : S.editSel.add(id);
+  const r = document.querySelector(`.arow[data-id="${id}"]`); const pk = S.editSel.has(id);
+  r.classList.toggle("picked", pk); r.querySelector(".arow-main").setAttribute("aria-pressed", String(pk));
+  paintEditBar();
+}
+function moveAlarm(from, to, focus) {
+  if (to === from || to < 0 || to >= S.alarms.length) { renderHome(); return; }
+  const [a] = S.alarms.splice(from, 1); S.alarms.splice(to, 0, a); saveAlarms(); renderHome();
+  if (focus) { const g = document.querySelector(`.arow[data-id="${a.id}"] .grip`); if (g) g.focus(); }
+}
+// 줄 세 개 손잡이를 끌어서 순서 바꾸기
+function startDrag(e, grip) {
+  const row = grip.closest(".arow"); const rows = [...document.querySelectorAll("#alarmList .arow")];
+  const from = rows.indexOf(row); const h = row.getBoundingClientRect().height; const y0 = e.clientY; let to = from;
+  grip.setPointerCapture(e.pointerId); row.classList.add("dragging");
+  const move = (ev) => {
+    const dy = ev.clientY - y0; row.style.transform = `translateY(${dy}px)`;
+    to = Math.max(0, Math.min(rows.length - 1, from + Math.round(dy / h)));
+    rows.forEach((r, j) => { if (r === row) return; const sh = j > from && j <= to ? -h : j < from && j >= to ? h : 0; r.style.transform = sh ? `translateY(${sh}px)` : ""; });
+  };
+  const up = () => { grip.removeEventListener("pointermove", move); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up); moveAlarm(from, to); };
+  grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
+}
+function setAllOn(on) {
+  S.alarms.forEach((a) => { a.on = on; }); saveAlarms();
+  document.querySelectorAll("#alarmList .arow").forEach((r) => { r.classList.toggle("off", !on); const t = r.querySelector("[data-on]"); if (t) t.checked = on; const rb = r.querySelector('[data-act="ring"]'); if (rb) rb.disabled = !on; });
+  paintAllToggle(); updateHero(); renderSimBox();
+  toast(on ? "모든 알람을 켰어요." : "모든 알람을 껐어요.");
+}
+function paintAllToggle() {
+  const b = $("#allToggle"); if (!b) return; const on = S.alarms.some((a) => a.on);
+  b.classList.toggle("alloff", !on); b.setAttribute("aria-pressed", String(on));
+  const l = `모든 알람 ${on ? "끄기" : "켜기"}`; b.setAttribute("aria-label", l); b.title = l;
+}
+function updateHero() {
+  const h = $("#heroH"); if (!h || S.editMode) return; const ht = heroText();
+  h.textContent = ht.h; $("#heroP").textContent = ht.p;
+  const on = S.alarms.filter((a) => a.on).length; $("#cntOn").textContent = on; $("#cntOff").textContent = S.alarms.length - on;
+}
+function renderSimBox() {
+  const box = $("#simBox"); if (!box || !S.plan) return;
+  stopSleepSim();
+  const al = selAlarm(); const inp = S.plan.inp; const a = S.finalAlarm ?? S.plan.t.latest; const on = al.on;
+  box.innerHTML = `
+    <div class="card-h"><h3>${inp.smart ? "스마트 웨이크업 시연" : "정시 알람 시연"}</h3><span class="src">${esc(al.name)} · ${fmt(a)}</span></div>
+    <p class="small muted">${inp.smart ? `알람 20분 전(${fmt(a - 20)})부터 얕은 잠이 감지되면 그때 깨워요. 얕은 잠이 안 오면 ${fmt(a)}에 울려요.` : `스마트 웨이크업이 꺼져 있어서 ${fmt(a)}에 정확히 울려요.`} ${esc(S.finalNote)}</p>
+    <div class="stage" id="stageBar" aria-hidden="true"></div>
+    <div class="btn-row"><span class="num" id="simClock" style="font-weight:600">--:--</span><span class="small muted" id="simStage">${on ? "대기 중" : "알람을 켜야 시연할 수 있어요"}</span></div>
+    <div class="btn-row">
+      <button class="btn primary" type="button" id="sleepStart" ${on ? "" : "disabled"}>잠들기</button>
+      ${inp.smart ? `<button class="btn" type="button" id="forceLight" disabled>얕은 잠 만들기</button>` : ""}
+      <button class="btn" type="button" id="ringNow" ${on ? "" : "disabled"}>지금 울리기</button>
+    </div>`;
+  $("#sleepStart").onclick = () => startSleepSim(a);
+  $("#ringNow").onclick = () => { stopSleepSim(); openRing(a, "바로 울림"); };
+}
+function toggleRow(id) {
+  const opening = S.openId !== id; S.openId = opening ? id : null;
+  document.querySelectorAll("#alarmList .arow").forEach((r) => {
+    const o = r.dataset.id === S.openId; r.classList.toggle("open", o);
+    r.querySelector(".arow-main").setAttribute("aria-expanded", String(o));
+    r.querySelector(".arow-more").inert = !o;
+  });
+  if (opening && id !== S.selId) selectAlarm(id);
+}
+function selectAlarm(id) {
+  S.selId = id; store.set("selId", id);
+  S.inp = selAlarm().inp; S.dawn.events.clear(); S.departChecks = {};
+  stopSleepSim(); buildPlan();
+  renderPlan(); renderNight(); renderDawn(); renderDepart(); renderSimBox();
+  document.querySelectorAll("#alarmList .arow").forEach((r) => r.classList.toggle("sel", r.dataset.id === id));
+}
+function patchAlarm(id, patch, rerenderHome = false) {
+  const a = byId(id); if (!a) return;
+  a.inp = { ...a.inp, ...patch }; saveAlarms();
+  if (id === S.selId) { S.inp = a.inp; S.plan.inp = a.inp; renderPlan(); renderNight(); renderDawn(); renderDepart(); renderSimBox(); }
+  if (rerenderHome) renderHome();
+}
+function setOn(id, on) {
+  const a = byId(id); a.on = on; saveAlarms();
+  const r = document.querySelector(`.arow[data-id="${id}"]`);
+  if (r) { r.classList.toggle("off", !on); const rb = r.querySelector('[data-act="ring"]'); if (rb) rb.disabled = !on; }
+  updateHero(); paintAllToggle(); if (id === S.selId) renderSimBox();
+  const at = nextRing(a);
+  toast(on && at ? `${a.name} 알람이 ${untilFor(at)} 울려요.` : `${a.name} 알람을 껐어요.`);
+}
+function toggleTip(btn) {
+  const tip = btn.closest(".has-tip").querySelector(".tip"); const open = tip.hidden;
+  closeTips(); tip.hidden = !open; btn.setAttribute("aria-expanded", String(open));
+}
+function closeTips(except) { document.querySelectorAll(".tip:not([hidden])").forEach((t) => { if (t === except) return; t.hidden = true; const b = t.closest(".has-tip").querySelector(".info"); if (b) b.setAttribute("aria-expanded", "false"); }); }
+function toggleMenu() {
+  const m = $("#moreMenu"); const open = m.hidden; m.hidden = !open;
+  $("#moreBtn").setAttribute("aria-expanded", String(open)); if (open) m.querySelector("button").focus();
+}
+function closeMenu() { const m = $("#moreMenu"); if (m && !m.hidden) { m.hidden = true; $("#moreBtn").setAttribute("aria-expanded", "false"); } }
+function menuAction(k) {
+  if (k === "edit") { closeMenu(); setEditMode(true); return; }
+  if (k === "reset") {
+    S.alarms = SEED(); saveAlarms(); S.openId = null;
+    S.selId = "a1"; store.set("selId", "a1"); S.inp = selAlarm().inp; S.dawn.events.clear(); S.departChecks = {};
+    buildPlan(); renderAll(); toast("예시 알람 3개로 되돌렸어요.");
+  }
+}
+function stopSleepSim() { if (sim) { clearInterval(sim.timer); sim = null; } }
+function startSleepSim(alarm) {
+  stopSleepSim(); ctx();
+  const inp = S.plan.inp; const r = rng(hash("sleep" + alarm + Date.now()));
+  sim = { t: alarm - 25, alarm, stages: [], force: false };
+  const bar = $("#stageBar"); bar.innerHTML = "";
+  const fl = $("#forceLight"); if (fl) { fl.disabled = false; fl.onclick = () => { sim && (sim.force = true); }; }
+  $("#sleepStart").disabled = true;
+  sim.timer = setInterval(() => {
+    if (!sim) return;
+    const inWin = sim.t >= sim.alarm - 20;
+    let light = r() < .18 || sim.force; if (sim.force) sim.force = false;
+    sim.stages.push(light ? "light" : "deep");
+    bar.insertAdjacentHTML("beforeend", `<i class="${light ? "light" : "deep"} ${inWin ? "win" : ""}"></i>`);
+    $("#simClock").textContent = fmt(sim.t);
+    $("#simStage").textContent = (light ? "얕은 잠" : "깊은 잠") + (inWin ? " · 깨우기 구간" : "");
+    if ((inp.smart && inWin && light) || sim.t >= sim.alarm) {
+      const at = sim.t; const how = inp.smart && at < sim.alarm ? `얕은 잠 감지 (${sim.alarm - at}분 일찍)` : "정시 알람";
+      stopSleepSim(); openRing(at, how); return;
+    }
+    sim.t += 1;
+  }, 260);
+}
+let ringState = null;
+/* ---------- 기상 미션 ---------- */
+const TILE_COLORS = [{ n: "빨강", c: "#E5484D" }, { n: "파랑", c: "#3B82F6" }, { n: "초록", c: "#30A46C" }, { n: "노랑", c: "#F5C518" }, { n: "보라", c: "#8E4EC6" }, { n: "주황", c: "#F76B15" }, { n: "분홍", c: "#E93D82" }, { n: "하늘", c: "#41B8D5" }];
+const SENTENCES = [
+  ["오늘도 좋은 하루", "물 한 잔 마시기", "창문 열고 숨쉬기", "기지개를 켜자"],
+  ["일어나서 이불을 개자", "오늘의 할 일을 떠올리자", "아침밥은 꼭 챙겨 먹자", "천천히 크게 숨을 쉬자"],
+  ["작은 습관이 모여 큰 변화를 만든다", "오늘 할 일을 내일로 미루지 말자", "늦지 않게 출발하면 마음이 편하다", "준비물을 챙기고 현관을 나서자"],
+  ["아침 햇빛을 보면 잠이 더 빨리 깬다고 해요", "계획을 세운 하루는 생각보다 길고 여유롭다", "오늘 만나는 사람에게 먼저 웃으며 인사하자", "버스 시간을 확인하고 오 분 일찍 나가자"]
+];
+const SENT_TIER = [0, 0, 1, 1, 2, 2, 3], SHOW_SEC = [6, 5, 5, 4, 4, 3, 3];
+function mathProblem(level, r) {
+  const n = (a, b) => a + Math.floor(r() * (b - a + 1));
+  switch (level) {
+    case 1: { const a = n(1, 9), b = n(1, 9); return { q: `${a} + ${b}`, a: a + b }; }
+    case 2: { const a = n(10, 49), b = n(2, 9); return { q: `${a} + ${b}`, a: a + b }; }
+    case 3: { const a = n(11, 69), b = n(11, 29); return r() < .5 ? { q: `${a} + ${b}`, a: a + b } : { q: `${a + b} − ${b}`, a }; }
+    case 4: { const a = n(11, 49), b = n(11, 49), c = n(11, 49); return { q: `${a} + ${b} + ${c}`, a: a + b + c }; }
+    case 5: { const a = n(3, 9), b = n(11, 19), c = n(11, 49); return { q: `${a} × ${b} + ${c}`, a: a * b + c }; }
+    case 6: { const a = n(101, 499), b = n(101, 499), c = n(11, 99); return { q: `${a} + ${b} − ${c}`, a: a + b - c }; }
+    default: { const a = n(12, 39), b = n(12, 29); return { q: `${a} × ${b}`, a: a * b }; }
+  }
+}
+function tileRound(level, r) {
+  const size = [3, 3, 4, 4, 5, 5, 6][level - 1], nColors = [3, 4, 4, 5, 6, 7, 8][level - 1], need = [2, 3, 3, 4, 4, 5, 6][level - 1];
+  const pal = [...TILE_COLORS].sort(() => r() - .5).slice(0, nColors);
+  const cells = Array.from({ length: size * size }, () => 1 + Math.floor(r() * (nColors - 1)));
+  const idx = [...cells.keys()].sort(() => r() - .5).slice(0, need); idx.forEach((k) => { cells[k] = 0; });
+  return { size, pal, cells, need: new Set(idx), found: new Set() };
+}
+function newRound(m) {
+  const r = rng((Date.now() + m.round * 7919) & 0xffffffff);
+  if (m.kind === "math") m.cur = mathProblem(m.level, r);
+  else if (m.kind === "tile") m.cur = tileRound(m.level, r);
+  else if (m.kind === "type") { const pool = SENTENCES[SENT_TIER[m.level - 1]]; m.cur = { text: pool[Math.floor(r() * pool.length)], phase: "show", left: SHOW_SEC[m.level - 1] }; startShow(m); }
+}
+function startShow(m) {
+  clearInterval(m.timer); m.cur.phase = "show"; m.cur.left = SHOW_SEC[m.level - 1];
+  m.timer = setInterval(() => {
+    m.cur.left -= 1;
+    if (m.cur.left <= 0) { clearInterval(m.timer); m.cur.phase = "input"; drawMission(); const el = $("#typeIn"); if (el) el.focus(); }
+    else { const c = $("#typeLeft"); if (c) c.textContent = m.cur.left; }
+  }, 1000);
+}
+function roundDone() {
+  const m = ringState.m; m.round += 1;
+  if (m.round >= m.count) return finishRing(MISSIONS[m.kind]);
+  newRound(m); drawMission();
+  const f = $("#missionBox input"); if (f) f.focus();
+}
+function exampleHtml(kind, level) {
+  const r = rng(hash("ex" + kind + level));
+  if (kind === "math") return `<span class="ex-badge">예제</span><div class="ex-body">${mathProblem(level, r).q} =</div>`;
+  if (kind === "tile") {
+    const t = tileRound(level, r);
+    return `<span class="ex-badge">예제</span><div class="ex-tiles" style="grid-template-columns:repeat(${t.size},1fr)">${t.cells.map((c) => `<i style="background:${t.pal[c].c}"></i>`).join("")}</div><div class="small">${t.pal[0].n} 타일 ${t.need.size}개 찾기 · ${t.size}×${t.size}</div>`;
+  }
+  const pool = SENTENCES[SENT_TIER[level - 1]];
+  return `<span class="ex-badge">예제</span><div class="ex-body small-ex">"${pool[0]}"</div><div class="small muted">${SHOW_SEC[level - 1]}초 동안 보여준 뒤 사라져요. 키보드로 따라 쓰면 돼요.</div>`;
+}
+function openRing(at, how) {
+  const inp = S.plan.inp;
+  const m = { kind: MISSIONS[inp.mission] ? inp.mission : "math", level: inp.level || 4, count: inp.count || 3, round: 0, cur: null, timer: null };
+  ringState = { at, how, sec: 0, stage: 1, m, timer: null };
+  startSound(inp.sound, inp.volume);
+  vibrate(true);
+  $("#ring").hidden = false; document.body.style.overflow = "hidden";
+  newRound(m); drawRing();
+  ringState.timer = setInterval(() => tickRing(1), 1000);
+}
+function tickRing(sec) {
+  const s = ringState; if (!s) return;
+  s.sec += sec;
+  if (s.stage < 2 && s.sec >= 60) { s.stage = 2; startSound("alarmMax", 100); vibrate(true, true); drawRing(); return; }
+  if (s.stage < 3 && s.sec >= 180) { s.stage = 3; drawRing(); return; }
+  const c = $("#ringClock"); if (c) c.textContent = fmt(s.at + Math.floor(s.sec / 60));
+  const e = $("#ringElapsed"); if (e) e.textContent = `${Math.floor(s.sec / 60)}분 ${String(s.sec % 60).padStart(2, "0")}초째 울리는 중`;
+}
+function drawRing() {
+  const s = ringState; const inp = S.plan.inp; const ring = $("#ring");
+  ring.classList.toggle("stage2", s.stage >= 2);
+  const banner = s.stage === 1 ? `<div class="stage-banner s1">1분 안에 ${s.m.kind === "none" ? "알람을 끄지" : "미션을 끝내지"} 않으면 최대 볼륨 경고음으로 바뀌어요.</div>`
+    : s.stage === 2 ? `<div class="stage-banner s2">최대 볼륨 경고음 · 진동 강화. ${s.m.kind === "none" ? "끌 때까지" : "미션을 끝낼 때까지"} 계속 울려요.</div>`
+    : `<div class="stage-banner s3">3분째 응답이 없어요. 최대 볼륨으로 계속 울려요.</div>`;
+  $("#ringInner").innerHTML = `
+    <div class="clock-sub">${esc(s.how)} · ${soundName(inp.sound)}${s.stage >= 2 ? " → 최대 볼륨 경고음" : ""}</div>
+    <div class="clock num" id="ringClock">${fmt(s.at + Math.floor(s.sec / 60))}</div>
+    <div class="clock-sub"><span id="ringElapsed">${Math.floor(s.sec / 60)}분 ${String(s.sec % 60).padStart(2, "0")}초째 울리는 중</span> ${inp.vibrate ? `<span class="vib on">진동 중</span>` : `<span class="vib">진동 꺼짐</span>`}</div>
+    ${banner}<div class="card mission" id="missionBox"></div>
+    <div class="ff"><button class="btn small" type="button" id="ff60">시연: 1분 빨리 감기</button><button class="btn small ghost" type="button" id="ringAbort">시연 중단</button></div>`;
+  drawMission();
+  $("#ff60").onclick = () => tickRing(60);
+  $("#ringAbort").onclick = () => closeRing(null);
+}
+function drawMission() {
+  const box = $("#missionBox"); if (!box || !ringState) return;
+  const m = ringState.m; const c = m.cur;
+  if (m.kind === "none") {
+    box.innerHTML = `<div class="m-head"><h3>미션 없음</h3></div><p class="small muted">이 알람은 미션 없이 바로 끌 수 있어요.</p><button class="btn none-btn" type="button" id="noneOff">알람 끄기</button>`;
+    $("#noneOff").onclick = () => finishRing(MISSIONS.none); $("#noneOff").focus();
+    return;
+  }
+  const head = `<div class="m-head"><h3>${MISSIONS[m.kind]}</h3><span class="small muted">${m.round + 1} / ${m.count} · ${m.level}단계</span></div>`;
+  if (m.kind === "math") {
+    box.innerHTML = `${head}<div class="m-big">${c.q} =</div><div class="m-input" id="mIn"><input type="number" inputmode="numeric" id="mathIn" aria-label="${c.q}의 답"><button class="btn" type="button" id="mathOk">확인</button></div>`;
+    const go = () => { const el = $("#mathIn"); if (Number(el.value) === c.a) roundDone(); else { const w = $("#mIn"); w.classList.remove("wrong"); void w.offsetWidth; w.classList.add("wrong"); el.select(); } };
+    $("#mathOk").onclick = go; $("#mathIn").addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+    $("#mathIn").focus();
+  } else if (m.kind === "tile") {
+    const tgt = c.pal[0];
+    box.innerHTML = `${head}<p style="text-align:center;font-weight:700"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${tgt.c};vertical-align:-1px"></span> ${tgt.n} 타일을 모두 누르세요 <span class="muted small">${c.found.size}/${c.need.size}</span></p>
+      <div class="tiles" style="grid-template-columns:repeat(${c.size},1fr)">${c.cells.map((ci, k) => `<button type="button" class="tile ${c.found.has(k) ? "found" : ""}" data-k="${k}" style="background:${c.pal[ci].c}" aria-label="${c.pal[ci].n} 타일"></button>`).join("")}</div>`;
+    box.querySelectorAll(".tile").forEach((b) => b.onclick = () => {
+      const k = +b.dataset.k; if (c.found.has(k)) return;
+      if (c.need.has(k)) { c.found.add(k); if (c.found.size === c.need.size) roundDone(); else drawMission(); }
+      else { b.classList.remove("wrong"); void b.offsetWidth; b.classList.add("wrong"); }
+    });
+  } else {
+    box.innerHTML = c.phase === "show"
+      ? `${head}<div class="sentence">${esc(c.text)}</div><p class="small muted" style="text-align:center"><b id="typeLeft">${c.left}</b>초 뒤에 사라져요. 잘 기억하세요.</p>`
+      : `${head}<div class="sentence hidden-s">${c.wrong ? "틀렸어요. 버튼을 누르면 문장을 다시 보여줘요." : "방금 본 문장을 그대로 쓰세요."}</div>
+         <div class="m-input" id="mIn"><input type="text" id="typeIn" autocomplete="off" aria-label="방금 본 문장"><button class="btn" type="button" id="typeOk">확인</button></div>
+         ${c.wrong ? `<button class="btn small" type="button" id="typeAgain">문장 다시 보기</button>` : ""}`;
+    if (c.phase === "input") {
+      const norm = (x) => x.replace(/[\s.,!?'"~·]/g, "");
+      const go = () => { if (norm($("#typeIn").value) === norm(c.text)) roundDone(); else { c.wrong = true; const v = $("#typeIn").value; drawMission(); $("#typeIn").value = v; const w = $("#mIn"); w.classList.add("wrong"); } };
+      $("#typeOk").onclick = go; $("#typeIn").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) go(); });
+      const ag = $("#typeAgain"); if (ag) ag.onclick = () => { c.wrong = false; startShow(m); drawMission(); };
+    }
+  }
+}
+function finishRing(missionName) {
+  const s = ringState; const woke = s.at + Math.floor(s.sec / 60);
+  S.wakeLog.push({ date: new Date().toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" }), alarm: fmt(S.finalAlarm ?? S.plan.t.latest), woke: fmt(woke), how: `${selAlarm().name} · ${s.how} · ${missionName}${s.m.kind === "none" ? "" : ` ${s.m.count}개`}${s.stage >= 3 ? " · 3분 넘게 울림" : s.stage === 2 ? " · 최대 볼륨" : ""}` });
+  S.wakeLog = S.wakeLog.slice(-20); store.set("wakeLog", S.wakeLog);
+  closeRing(woke);
+}
+function closeRing(woke) {
+  if (ringState) { clearInterval(ringState.timer); clearInterval(ringState.m.timer); }
+  ringState = null; stopSound(); vibrate(false);
+  $("#ring").hidden = true; $("#ring").classList.remove("stage2"); document.body.style.overflow = "";
+  renderHome();
+  if (woke != null) { toast(`기상 완료 ${fmt(woke)}. 출발 마감은 ${fmt(departDeadline())}이에요.`); selectTab("depart"); }
+}
+let vibTimer = null;
+function vibrate(on, strong = false) {
+  clearInterval(vibTimer);
+  try { if (!on || !S.plan.inp.vibrate) { navigator.vibrate && navigator.vibrate(0); return; } } catch { return; }
+  const pat = strong ? [800, 200] : [400, 600];
+  const go = () => { try { navigator.vibrate && navigator.vibrate(pat); } catch {} };
+  go(); vibTimer = setInterval(go, 1000);
+}
+
+/* ---------- 5. 출발 ---------- */
+function departDeadline() {
+  const { t } = S.plan; const shift = (S.finalAlarm ?? t.latest) - t.latest;
+  return t.depart + shift;
+}
+function departItems() {
+  const { inp, w } = S.plan;
+  const list = inp.memo.split("\n").map((s) => s.trim()).filter(Boolean).map((s) => ({ name: s, why: "내가 적은 것" }));
+  list.unshift({ name: "휴대폰", why: "기본" });
+  if (inp.mode === "car") list.push({ name: "차 키", why: "자가용" });
+  else if (inp.mode === "bike") list.push({ name: "자전거 헬멧", why: "자전거" }, { name: "자전거 자물쇠", why: "자전거" });
+  else if (inp.mode !== "walk") list.push({ name: "교통카드", why: MODES[inp.mode].label });
+  if (w.condition === "비") list.push({ name: "우산", why: "비 예보" });
+  if (w.condition === "눈") list.push({ name: "우산", why: "눈 예보" }, { name: "미끄럼 방지 신발", why: "눈 예보" });
+  if (w.tmin <= 5) list.push({ name: "장갑·목도리", why: `최저 ${w.tmin}°` });
+  return list;
+}
+function renderDepart() {
+  if (!S.plan) return;
+  const { t } = S.plan; const dl = departDeadline(); const items = departItems();
+  const done = items.filter((it) => S.departChecks[it.name]).length;
+  $("#tab-depart").innerHTML = `
+    <h2 class="page-title">출발</h2>
+    ${pickerHtml()}
+    <div class="card">
+      <div class="card-h"><h3>출발 마감</h3><span class="small muted">${esc(S.finalNote)}</span></div>
+      <p class="big-time" style="margin:0">${fmt(dl)}</p>
+      <p class="small muted">출발 3분 전(<span class="num">${fmt(dl - 3)}</span>)에 준비물 알림이 와요. 아래 버튼으로 언제든 현관 체크를 열 수 있어요.</p>
+      <div class="btn-row" style="margin-top:10px"><button class="btn primary" type="button" id="play3">출발 3분 전 알림 재생</button><button class="btn" type="button" id="openDoor">현관 체크 열기</button></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>오늘 챙길 것</h3><span class="small muted">${done}/${items.length}</span></div>
+      <div class="checklist">${items.map((it) => `<div class="ck"><span class="mark ${S.departChecks[it.name] ? "ok" : "no"}">${S.departChecks[it.name] ? "✓" : "·"}</span><span class="grow">${esc(it.name)}</span><span class="small muted">${esc(it.why)}</span></div>`).join("")}</div>
+    </div>`;
+  $("#play3").onclick = () => { toast(`${fmt(dl - 3)} · 3분 뒤 출발해야 해요. 준비물을 확인하세요.`); setTimeout(openSheet, 900); };
+  $("#openDoor").onclick = openSheet;
+}
+function openSheet() {
+  if (!S.plan) return;
+  const dl = departDeadline(); const items = departItems();
+  const draw = () => {
+    const done = items.filter((it) => S.departChecks[it.name]).length; const all = done === items.length;
+    $("#sheet").innerHTML = `
+      <div class="door">
+        <div class="door-h"><h3>현관 앞 체크</h3><span class="num">출발 마감 ${fmt(dl)}</span></div>
+        <div class="progress" aria-hidden="true"><i style="width:${items.length ? done / items.length * 100 : 0}%"></i></div>
+        <div class="items">${items.map((it, i) => `<label class="item"><input type="checkbox" data-i="${i}" ${S.departChecks[it.name] ? "checked" : ""}><span>${esc(it.name)}</span><span class="why">${esc(it.why)}</span></label>`).join("")}</div>
+        ${all ? `<p class="go-banner">출발!</p>` : `<p class="small muted">${items.length - done}개 남았어요.</p>`}
+      </div>
+      <div class="btn-row"><button class="btn" type="button" id="sheetClose">닫기</button><button class="btn ghost small" type="button" id="sheetReset">체크 초기화</button></div>`;
+    $("#sheet").querySelectorAll("input[data-i]").forEach((el) => el.onchange = () => { S.departChecks[items[+el.dataset.i].name] = el.checked; draw(); renderDepart(); });
+    $("#sheetClose").onclick = closeSheet;
+    $("#sheetReset").onclick = () => { S.departChecks = {}; draw(); renderDepart(); };
+  };
+  draw(); showSheet($("#sheetWrap"));
+  const f = $("#sheet input"); if (f) f.focus();
+}
+const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+function showSheet(el) { el.classList.remove("closing"); el.hidden = false; }
+function hideSheet(el, done) {
+  if (el.hidden) return;
+  el.classList.add("closing");
+  setTimeout(() => { el.hidden = true; el.classList.remove("closing"); if (done) done(); }, reduced() ? 0 : 210);
+}
+let delArm = false;
+function resetDel() { delArm = false; $("#delBtn").textContent = "이 알람 삭제"; }
+function updatePreview() {
+  const inp = readInputs(); const w = activeWeather();
+  const best = rankRoutes(genRoutes(inp), inp, w, {})[0]; const t = computeTimes(best, inp, w); const f = fmt12(t.latest);
+  $("#editPreview").innerHTML = `<span class="k">AI가 계산한 알람 시각</span><span class="alarm-time"><span class="ampm">${f.ampm}</span><span class="t">${f.t}</span></span><span class="k">${esc(inp.dest)} <span class="num">${inp.arrive}</span> 도착 · ${MODES[inp.mode].label} ${best.total}분 · 출발 <span class="num">${fmt(t.depart)}</span></span>`;
+}
+// 'AI가 대신 작성해주기' 표시
+function paintAiFill() {
+  const w = $("#walkAi").checked, sp = $("#speedAi").checked;
+  $("#walk").readOnly = w; $("#walkBox").classList.toggle("est", w); $("#walkUnit").textContent = w ? "분(예상)" : "분";
+  $("#speed").readOnly = sp; $("#speedBox").classList.toggle("est", sp); $("#speedUnit").textContent = sp ? "km/h(평균)" : "km/h";
+}
+function ruleTrip(inp) {
+  const r = rng(hash(inp.origin + "|" + inp.dest)); let km = 1.2 + r() * 9; if (inp.mode === "walk") km = Math.min(km, .6 + r() * 2.4);
+  const SPD = { walk: 4.8, bike: 14, bus: 17, subway: 24, car: 28, mixed: 19 }, EXTRA = { walk: 0, bike: 2, bus: 8, subway: 9, car: 4, mixed: 10 };
+  return { min: Math.max(3, Math.round(km / SPD[inp.mode] * 60 + EXTRA[inp.mode])), km: r1(km) };
+}
+let tripSeq = 0;
+async function estimateTrip() {
+  if (!$("#walkAi").checked) return;
+  const my = ++tripSeq; const inp = readInputs(); const note = $("#walkNote");
+  let est = ruleTrip(inp), src = "rule", why = "";
+  if (S.sample) {
+    note.textContent = "AI가 목적지까지 걸리는 시간을 계산하는 중…";
+    try {
+      const j = await S.sample.json(`너는 '기상·출근 매니저' 앱의 이동 시간 추정 담당이야. 실시간 교통 정보는 없으니 지명과 이동 수단으로 그럴듯하게 추정해.
+출발지: ${inp.origin}
+목적지: ${inp.dest}
+이동 수단: ${MODES[inp.mode].label}
+평일 아침 기준으로 집 문 앞에서 목적지 문 앞까지 걸리는 시간(분)을 정수로. 버스·지하철이면 걷기와 기다림을 포함해.
+JSON 하나만 답해: {"minutes":정수,"why":"추정 근거 한 문장(한국어)"}`, { modelTier: "quick" });
+      const m = Math.round(+(j && j.minutes));
+      if (m > 0 && m < 300) { est = { min: m }; src = "ai"; why = String(j.why || "").slice(0, 120); }
+    } catch { /* 규칙 추정 사용 */ }
+  }
+  if (my !== tripSeq || !$("#walkAi").checked) return;
+  $("#walk").value = est.min;
+  note.textContent = src === "ai" ? `AI 추정이에요. ${why}` : `AI가 연결되지 않아 거리(약 ${est.km}km)와 이동 수단으로 추정했어요.`;
+  updatePreview();
+}
+// 난이도 바: 쉬울수록 파랑, 어려울수록 빨강
+function paintLevel() {
+  const el = $("#level"); const v = +el.value || 4; const pct = (v - 1) / 6 * 100; const hue = 212 + (v - 1) / 6 * 148;
+  el.style.setProperty("--track", `linear-gradient(90deg, hsl(212 85% 60%), hsl(${hue} 80% 56%) ${pct}%, var(--line) ${pct}%)`);
+  el.setAttribute("aria-valuetext", `${v}단계`); $("#levelOut").textContent = `${v}단계`;
+  paintExample();
+}
+function paintExample() {
+  const kind = (document.querySelector('input[name="mission"]:checked') || { value: "math" }).value;
+  const none = kind === "none"; const more = $("#missionMore"); const wasHidden = more.hidden;
+  more.hidden = none; $("#noneNote").hidden = !none;
+  if (none) return;
+  $("#missionEx").innerHTML = exampleHtml(kind, +$("#level").value || 4);
+  if (wasHidden) requestAnimationFrame(() => setWheel(+$("#count").value));
+}
+// 챙길 것·리마인드: 키워드를 입력하고 추가 버튼으로 목록에 쌓기
+function renderMemo() {
+  $("#memoList").innerHTML = memoItems.length
+    ? memoItems.map((x, i) => `<li><span>${esc(x)}</span><button type="button" data-memo-del="${i}" aria-label="${esc(x)} 지우기">×</button></li>`).join("")
+    : `<li class="empty-li">아직 추가한 항목이 없어요. 위 칸에 적고 추가를 눌러요.</li>`;
+}
+function addMemo() {
+  const el = $("#memoIn"); const parts = el.value.split(",").map((x) => x.trim()).filter(Boolean);
+  if (!parts.length) { el.focus(); return; }
+  let dup = 0; parts.forEach((x) => { if (memoItems.includes(x)) dup++; else memoItems.push(x); });
+  el.value = ""; renderMemo(); el.focus();
+  if (dup) toast("이미 있는 항목은 빼고 추가했어요.");
+}
+// 문제 개수 휠
+const WHEEL_H = 44;
+function buildWheel() { $("#countWheel").innerHTML = `<div class="wheel-pad"></div>${Array.from({ length: 10 }, (_, i) => `<div class="wheel-item" data-n="${i + 1}">${i + 1}</div>`).join("")}<div class="wheel-pad"></div>`; }
+function paintWheel(v) {
+  $("#count").value = v; const w = $("#countWheel"); w.setAttribute("aria-valuenow", v); w.setAttribute("aria-valuetext", `${v}회`);
+  w.querySelectorAll(".wheel-item").forEach((it) => it.classList.toggle("on", +it.dataset.n === v));
+}
+function setWheel(v, smooth = false) {
+  v = Math.min(10, Math.max(1, Math.round(v) || 3)); paintWheel(v);
+  $("#countWheel").scrollTo({ top: (v - 1) * WHEEL_H, behavior: smooth && !reduced() ? "smooth" : "auto" });
+}
+function openEdit(id = null) {
+  S.editId = id; const a = id ? byId(id) : null; const cur = selAlarm().inp;
+  writeInputs(a ? a.inp : { ...DEFAULTS, origin: cur.origin, dest: "", walk: 20, arrive: "09:00", days: [], memo: "" });
+  $("#aname").value = a ? a.name : ""; $("#aname").placeholder = `알람 ${S.alarms.length + 1}`;
+  $("#editTitle").textContent = a ? "알람 편집" : "새 알람";
+  $("#planBtn").textContent = a ? "저장하고 계획 다시 세우기" : "알람 추가하고 계획 세우기";
+  $("#delBtn").hidden = !a; resetDel(); updatePreview(); closeMenu();
+  showSheet($("#editWrap")); document.body.style.overflow = "hidden";
+  const sh = $("#editWrap .sheet"); sh.scrollTop = 0; sh.focus({ preventScroll: true });
+  requestAnimationFrame(() => setWheel(+$("#count").value));
+}
+function closeEdit() { hideSheet($("#editWrap"), () => { document.body.style.overflow = ""; }); }
+function cancelEdit() { stopSound(); tripSeq++; closeEdit(); }
+function closeSheet() { hideSheet($("#sheetWrap")); $("#fab").focus({ preventScroll: true }); }
+
+/* ---------- AI 연결 (claude.use("sample")) ---------- */
+function setAi(state, text) {
+  S.aiState = state; $("#aiDot").className = "dot" + (state === "on" ? " on" : state === "busy" ? " busy" : "");
+  $("#aiText").textContent = text;
+}
+async function connectAi() {
+  try {
+    const s = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+    S.sample = s || null;
+  } catch { S.sample = null; }
+  if (S.sample) setAi("on", "AI 연결됨 · 계획을 세우면 AI가 날씨를 예측해요");
+  else setAi("off", "AI 연결 안 됨 · 규칙으로 날씨를 예측해요");
+  if (S.plan) renderNight();
+}
+async function aiWeather() {
+  if (!S.sample) return;
+  const inp = S.inp; const d = tomorrow();
+  setAi("busy", "AI가 내일 아침 날씨를 예측하는 중");
+  const prompt = `너는 '기상·출근 매니저' 앱 안의 AI야. 실시간 관측 자료는 없으니 계절과 지역 기후를 바탕으로 그럴듯한 예측을 만들어.
+날짜: ${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 아침 6~9시
+출발지: ${inp.origin}
+목적지: ${inp.dest}
+알람음 후보 id: ${SOUNDS.map((s) => `${s.id}(${s.name})`).join(", ")}
+JSON 하나만 답해. 형식:
+{"condition":"맑음|흐림|비|눈 중 하나","tmin":정수,"tmax":정수,"precip":0~100 정수,"note":"예측 근거 한 문장(한국어)","sound":"알람음 id","soundWhy":"그 알람음을 고른 이유 한 문장(한국어, 날씨와 연결)"}`;
+  try {
+    const j = await S.sample.json(prompt, { modelTier: "quick" });
+    if (!j || !WX[j.condition]) throw { code: "invalid_json" };
+    S.weather = { condition: j.condition, tmin: Math.round(+j.tmin || 0), tmax: Math.round(+j.tmax || 0), precip: Math.max(0, Math.min(100, Math.round(+j.precip || 0))), note: String(j.note || "").slice(0, 160), source: "ai" };
+    S.aiSound = SOUNDS.some((s) => s.id === j.sound) ? { id: j.sound, why: String(j.soundWhy || "").slice(0, 160) } : null;
+    setAi("on", "AI가 내일 날씨를 예측했어요");
+    buildPlan(); renderAll();
+  } catch (e) {
+    const code = e && e.code;
+    if (code === "not_granted" || code === "sampling_disabled" || code === "not_declared") { S.sample = null; setAi("off", "AI 사용이 허용되지 않아 규칙으로 예측해요"); renderNight(); }
+    else if (code === "rate_limited") setAi("off", "AI 요청이 많아요. 잠시 뒤 다시 눌러 주세요");
+    else setAi("off", "AI 예측에 실패해서 규칙 예측을 썼어요");
+  }
+}
+async function aiBriefing() {
+  if (!S.sample) return;
+  const { inp, w, best, t } = S.plan; const btn = $("#aiBriefBtn"); const out = $("#briefText"); const note = $("#briefNote");
+  btn.disabled = true; out.textContent = "AI가 브리핑을 쓰는 중…"; note.textContent = "";
+  const data = { 날씨: `${w.condition} ${w.tmin}~${w.tmax}도 강수 ${w.precip}%`, 경로: best.name, 이동시간: best.total + "분", 출발마감: fmt(t.depart), 알람: fmt(t.latest), 권장취침: fmt(t.recBed), 최소수면부족: t.short ? fmtDur(t.short) : "없음", 첫차문제: t.firstFail ? "있음" : "없음", 챙길것: departItems().map((i) => i.name).join(", "), 추천알람음: soundName(recommendSound().id) };
+  try {
+    await S.sample(`너는 고등학생과 직장인이 쓰는 '기상·출근 매니저' 앱의 밤 브리핑 담당이야. 아래 숫자만 사용하고 새 숫자를 지어내지 마. 다정하지만 짧게, 한국어 존댓말 3~4문장으로 오늘 밤 할 일과 내일 아침 계획을 알려 줘. 마크다운 없이 평문으로.\n\n${JSON.stringify(data, null, 1)}`, { modelTier: "quick", onText: ({ text }) => { out.textContent = text; } });
+    note.textContent = "AI가 쓴 문장이에요.";
+  } catch (e) {
+    out.textContent = (e && e.text) || briefingText();
+    note.textContent = e && e.code === "not_granted" ? "AI 사용이 허용되지 않아 템플릿 문장을 보여줘요." : "AI 브리핑을 못 받아서 템플릿 문장을 보여줘요.";
+  } finally { btn.disabled = false; }
+}
+
+/* ---------- 공통 ---------- */
+function toast(text) {
+  const t = $("#toast"); t.innerHTML = `<div class="push"><div class="app-line"><span>AI 기상·출근 매니저</span><span>지금</span></div><p>${esc(text)}</p></div>`;
+  t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, 3600);
+}
+const TABS = ["home", "plan", "night", "dawn", "depart"];
+let curTab = null;
+function selectTab(id, { anim = true } = {}) {
+  const prev = curTab; curTab = id;
+  const i = TABS.indexOf(id), pi = TABS.indexOf(prev);
+  TABS.forEach((t) => { $("#t-" + t).setAttribute("aria-selected", String(t === id)); $("#tab-" + t).hidden = t !== id; });
+  $(".nav-inner").style.setProperty("--i", i);
+  const p = $("#tab-" + id); p.classList.remove("in-r", "in-l");
+  if (anim && prev && prev !== id) { void p.offsetWidth; p.classList.add(i > pi ? "in-r" : "in-l"); }
+  store.set("tab", id); closeMenu(); closeTips();
+  if (S.editMode && id !== "home") { S.editMode = false; S.editSel.clear(); renderHome(); }
+  scrollTo({ top: 0 });
+}
+function renderAll() { renderPlan(); renderNight(); renderDawn(); renderHome(); renderDepart(); }
+
+/* ---------- 테마 ---------- */
+function effectiveDark() { const a = document.documentElement.getAttribute("data-theme"); return a ? a === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; }
+function paintThemeBtn() {
+  const d = effectiveDark(); const b = $("#themeBtn"); if (!b) return; const label = d ? "라이트 모드로 바꾸기" : "다크 모드로 바꾸기";
+  b.innerHTML = d ? ICON.sun : ICON.moon; b.setAttribute("aria-label", label); b.title = label;
+}
+// 테마 전환: 버튼 위치에서 원이 퍼지며 바뀜 (지원 안 되는 브라우저는 색이 부드럽게 바뀜)
+// 테마 전환 애니메이션
+const WAVE_MS = 760, WAVE_EASE = [.4, 0, .2, 1];
+// 원이 반지름의 p만큼 퍼지는 시각(0~1)을 easing 곡선에서 거꾸로 찾음
+function waveTimeAt(p) {
+  const [x1, y1, x2, y2] = WAVE_EASE; const c = (a, b, s) => 3 * (1 - s) ** 2 * s * a + 3 * (1 - s) * s * s * b + s ** 3;
+  for (let i = 0; i <= 100; i++) { const s = i / 100; if (c(y1, y2, s) >= p) return c(x1, x2, s); }
+  return 1;
+}
+let themeAnim = null;
+function endThemeAnim() {
+  if (!themeAnim) return; const a = themeAnim; themeAnim = null;
+  clearTimeout(a.t1); clearTimeout(a.t2); try { a.anim.cancel(); } catch {}
+  $("#themeWave").hidden = true; document.body.style.backgroundColor = ""; document.body.style.backgroundImage = "";
+  document.documentElement.classList.remove("theming"); a.marked.forEach((el) => el.style.removeProperty("--td"));
+}
+function setTheme(next, x, y) {
+  const html = document.documentElement;
+  const apply = () => { html.setAttribute("data-theme", next); store.set("theme", next); paintThemeBtn(); const nb = $("#themeBtn"); if (nb) { nb.classList.add("spin"); setTimeout(() => nb.classList.remove("spin"), 600); } };
+  endThemeAnim();
+  if (reduced() || !Element.prototype.animate) return apply();
+  const R = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  // 1) 지금 배경을 몸통(body)에 고정해 두고
+  const cs = getComputedStyle(document.body); document.body.style.backgroundColor = cs.backgroundColor; document.body.style.backgroundImage = cs.backgroundImage;
+  // 2) 화면에 보이는 덩어리마다 원이 닿는 시각을 계산해서 색 바뀌는 시작 시각(--td)으로 넣음
+  const marked = [];
+  const sel = `.top, .nav-inner, .fab, .editbar, #tab-${curTab} > *, #tab-${curTab} .arow, #tab-${curTab} .card > *, #tab-${curTab} .opt, #tab-${curTab} .stat, #tab-${curTab} .alert`;
+  document.querySelectorAll(sel).forEach((el) => {
+    const r = el.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight || !r.width) return;
+    // 큰 카드는 가운데, 작은 줄은 가까운 쪽 가장자리를 기준으로 원이 닿는 시각을 잼
+    const big = r.height > 160; const cx = big ? r.left + r.width / 2 : Math.min(Math.max(x, r.left), r.right), cy = big ? r.top + r.height / 2 : Math.min(Math.max(y, r.top), r.bottom);
+    const dx = cx - x, dy = cy - y;
+    el.style.setProperty("--td", Math.round(waveTimeAt(Math.min(1, Math.hypot(dx, dy) / R)) * WAVE_MS) + "ms"); marked.push(el);
+  });
+  html.classList.add("theming");
+  // 3) 새 테마로 바꾸면 글자 뒤의 원(새 배경색)이 버튼에서 퍼짐
+  apply();
+  const wave = $("#themeWave"); wave.hidden = false;
+  const anim = wave.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${R}px at ${x}px ${y}px)`] }, { duration: WAVE_MS, easing: `cubic-bezier(${WAVE_EASE.join(",")})`, fill: "forwards" });
+  themeAnim = { anim, marked, t1: null, t2: null };
+  // 4) 다 퍼지면 몸통 배경을 새 테마로 돌려놓고 정리
+  themeAnim.t1 = setTimeout(() => { document.body.style.backgroundColor = ""; document.body.style.backgroundImage = ""; }, WAVE_MS + 20);
+  themeAnim.t2 = setTimeout(endThemeAnim, WAVE_MS + 420);
+}
+function toggleTheme(from) {
+  const el = from || $("#themeBtn"); const r = el ? el.getBoundingClientRect() : { left: innerWidth - 40, top: 40, width: 0, height: 0 };
+  setTheme(effectiveDark() ? "light" : "dark", r.left + r.width / 2, r.top + r.height / 2);
+}
+function initTheme() {
+  const saved = store.get("theme", null); if (saved) document.documentElement.setAttribute("data-theme", saved);
+  paintThemeBtn();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", paintThemeBtn);
+}
+
+/* ---------- 시작 ---------- */
+buildInputs(); buildWheel();
+S.alarms = loadAlarms(); saveAlarms();
+S.inp = S.alarms[0].inp;
+S.weather = ruleWeather(S.inp.origin);
+if (!byId(S.selId)) S.selId = (upcoming() || { a: S.alarms[0] }).a.id;
+S.inp = selAlarm().inp;
+buildPlan(); renderAll();
+initTheme();
+selectTab(TABS.includes(store.get("tab", "home")) ? store.get("tab", "home") : "home", { anim: false });
+
+TABS.forEach((t) => $("#t-" + t).addEventListener("click", () => selectTab(t)));
+$(".tabs").addEventListener("keydown", (e) => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  const i = TABS.findIndex((t) => $("#t-" + t).getAttribute("aria-selected") === "true");
+  const n = TABS[(i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length]; selectTab(n); $("#t-" + n).focus();
+});
+document.addEventListener("click", (e) => {
+  const g = e.target.closest("[data-go]"); if (g) { selectTab(g.dataset.go); return; }
+  const pk = e.target.closest("[data-pick]"); if (pk) { if (pk.dataset.pick !== S.selId) { selectAlarm(pk.dataset.pick); S.openId = pk.dataset.pick; renderHome(); } return; }
+  if (!e.target.closest(".toolbar")) closeMenu();
+  const inf = e.target.closest(".info"); if (inf) { e.preventDefault(); toggleTip(inf); return; }
+  if (!e.target.closest(".tip")) closeTips();
+});
+const home = $("#tab-home");
+home.addEventListener("click", (e) => {
+  if (e.target.closest(".info")) return;
+  const main = e.target.closest(".arow-main"); if (main) { const id = main.closest(".arow").dataset.id; return S.editMode ? togglePick(id) : toggleRow(id); }
+  if (e.target.closest("#editExit")) return setEditMode(false);
+  if (e.target.closest("#pickAll")) { if (S.editSel.size === S.alarms.length) S.editSel.clear(); else S.alarms.forEach((a) => S.editSel.add(a.id)); renderHome(); return; }
+  if (e.target.closest("#themeBtn")) return toggleTheme(e.target.closest("#themeBtn"));
+  if (e.target.closest("#allToggle")) return setAllOn(!S.alarms.some((a) => a.on));
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    const id = act.closest(".arow").dataset.id; const a = byId(id);
+    if (act.dataset.act === "edit") openEdit(id);
+    else if (act.dataset.act === "plan") { if (id !== S.selId) selectAlarm(id); selectTab("plan"); }
+    else if (act.dataset.act === "ring") { if (id !== S.selId) selectAlarm(id); stopSleepSim(); openRing(alarmMinFor(a), "바로 울림"); }
+    return;
+  }
+  if (e.target.closest("#moreBtn")) return toggleMenu();
+  const mi = e.target.closest("[data-menu]"); if (mi) return menuAction(mi.dataset.menu);
+});
+home.addEventListener("change", (e) => {
+  const t = e.target; const row = t.closest(".arow"); if (!row) return;
+  if (t.dataset.on) setOn(t.dataset.on, t.checked);
+  else if (t.dataset.opt === "volume") patchAlarm(row.dataset.id, { volume: +t.value });
+  else if (t.dataset.opt) patchAlarm(row.dataset.id, { [t.dataset.opt]: t.checked });
+});
+home.addEventListener("pointerdown", (e) => { const g = e.target.closest(".grip"); if (g && S.editMode && e.button === 0) { e.preventDefault(); startDrag(e, g); } });
+home.addEventListener("keydown", (e) => {
+  const g = e.target.closest(".grip"); if (!g || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+  e.preventDefault(); const i = S.alarms.findIndex((a) => a.id === g.closest(".arow").dataset.id);
+  moveAlarm(i, i + (e.key === "ArrowUp" ? -1 : 1), true);
+});
+$("#ebOn").onclick = () => { S.alarms.forEach((a) => { if (S.editSel.has(a.id)) a.on = true; }); saveAlarms(); renderHome(); toast(`${S.editSel.size}개 알람을 켰어요.`); };
+$("#ebOff").onclick = () => { S.alarms.forEach((a) => { if (S.editSel.has(a.id)) a.on = false; }); saveAlarms(); renderHome(); toast(`${S.editSel.size}개 알람을 껐어요.`); };
+$("#ebDel").onclick = () => {
+  const n = S.editSel.size; if (!n) return;
+  if (n >= S.alarms.length) { toast("알람이 하나는 남아 있어야 계획을 보여줄 수 있어요."); return; }
+  S.alarms = S.alarms.filter((a) => !S.editSel.has(a.id)); saveAlarms(); S.editSel.clear();
+  if (!byId(S.selId)) { S.selId = (upcoming() || { a: S.alarms[0] }).a.id; store.set("selId", S.selId); S.inp = selAlarm().inp; buildPlan(); }
+  renderAll(); toast(`${n}개 알람을 지웠어요.`);
+};
+home.addEventListener("input", (e) => { if (e.target.dataset.opt === "volume") e.target.closest(".opt").querySelector("[data-volout]").textContent = e.target.value + "%"; });
+$("#volume").addEventListener("input", () => { $("#volOut").textContent = $("#volume").value; });
+$("#previewBtn").onclick = () => preview($("#sound").value, +$("#volume").value);
+let tripTimer = null;
+$("#memoAdd").onclick = addMemo;
+$("#memoIn").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); addMemo(); } });
+$("#memoList").addEventListener("click", (e) => { const b = e.target.closest("[data-memo-del]"); if (!b) return; memoItems.splice(+b.dataset.memoDel, 1); renderMemo(); $("#memoIn").focus(); });
+$("#planForm").addEventListener("input", (e) => {
+  const id = e.target.id; const nm = e.target.name;
+  if (id === "level") paintLevel();
+  if (nm === "mission") paintExample();
+  if (id === "walkAi") { paintAiFill(); if (e.target.checked) estimateTrip(); else { tripSeq++; $("#walkNote").textContent = ""; } }
+  if (id === "speedAi") { if (e.target.checked) $("#speed").value = "4.8"; paintAiFill(); }
+  if ((id === "origin" || id === "dest" || id === "mode") && $("#walkAi").checked) { clearTimeout(tripTimer); tripTimer = setTimeout(estimateTrip, 700); }
+  updatePreview();
+});
+$("#planForm").addEventListener("change", (e) => { if (e.target.id === "mode" && $("#walkAi").checked) estimateTrip(); });
+let wheelT = null;
+$("#countWheel").addEventListener("scroll", () => { clearTimeout(wheelT); wheelT = setTimeout(() => paintWheel(Math.min(10, Math.max(1, Math.round($("#countWheel").scrollTop / WHEEL_H) + 1))), 70); });
+$("#countWheel").addEventListener("click", (e) => { const it = e.target.closest(".wheel-item"); if (it) setWheel(+it.dataset.n, true); });
+$("#countWheel").addEventListener("keydown", (e) => { if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); setWheel(+$("#count").value + (e.key === "ArrowUp" ? -1 : 1), true); } });
+$("#planForm").addEventListener("submit", (e) => {
+  e.preventDefault(); stopSound(); tripSeq++;
+  const inp = readInputs(); const name = $("#aname").value.trim() || $("#aname").placeholder;
+  let a = S.editId ? byId(S.editId) : null;
+  if (a) { a.inp = inp; a.name = name; }
+  else { a = { id: "a" + Date.now().toString(36), name, on: true, v: 4, inp }; S.alarms.push(a); }
+  saveAlarms();
+  const prevOrigin = S.inp.origin;
+  S.selId = a.id; store.set("selId", a.id); S.inp = a.inp; S.openId = a.id;
+  if (S.inp.origin !== prevOrigin || !S.weather || S.weather.source !== "ai") S.weather = ruleWeather(S.inp.origin);
+  S.dawn.events.clear(); S.departChecks = {}; stopSleepSim();
+  buildPlan(); renderAll(); closeEdit(); selectTab("home");
+  const row = document.querySelector(`.arow[data-id="${a.id}"]`);
+  if (row) { row.classList.add("flash"); setTimeout(() => row.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }), 120); }
+  const at = nextRing(a); toast(`${a.name} 알람${at ? `이 ${untilFor(at)} 울려요` : "을 저장했어요"}.`);
+  aiWeather();
+});
+$("#delBtn").onclick = () => {
+  if (S.alarms.length <= 1) { toast("알람이 하나는 있어야 계획을 보여줄 수 있어요."); return; }
+  if (!delArm) { delArm = true; $("#delBtn").textContent = "한 번 더 누르면 삭제돼요"; return; }
+  const a = byId(S.editId); S.alarms = S.alarms.filter((x) => x.id !== a.id); saveAlarms();
+  if (S.selId === a.id) { S.selId = (upcoming() || { a: S.alarms[0] }).a.id; store.set("selId", S.selId); S.inp = selAlarm().inp; buildPlan(); }
+  S.openId = null; closeEdit(); renderAll(); selectTab("home"); toast(`${a.name} 알람을 지웠어요.`);
+};
+$("#fab").onclick = () => openEdit(null);
+$("#sheetWrap").addEventListener("click", (e) => { if (e.target.id === "sheetWrap") closeSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if (document.querySelector(".tip:not([hidden])")) { closeTips(); return; } if (S.editMode && $("#editWrap").hidden) { setEditMode(false); return; } if ($("#moreMenu") && !$("#moreMenu").hidden) { closeMenu(); $("#moreBtn").focus(); } else if (!$("#sheetWrap").hidden) closeSheet(); else if (!$("#editWrap").hidden) cancelEdit(); });
+$("#editCancel").onclick = cancelEdit;
+$("#editWrap").addEventListener("click", (e) => { if (e.target.id === "editWrap") cancelEdit(); });
+setInterval(updateHero, 30000);
+connectAi();
+})();
+</script>
+</body></html>
